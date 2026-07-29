@@ -3,13 +3,23 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: ExpoGuide AI — Riyadh Expo 2030 AI Tourist Guide API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: pavilions
+    description: Expo pavilions and their details
+  - name: restaurants
+    description: Dining and restaurant recommendations
+  - name: queue
+    description: Live queue and crowd tracking
+  - name: interests
+    description: Visitor interest matching
+  - name: gemini
+    description: Gemini AI chat and image operations
 paths:
   /healthz:
     get:
@@ -24,6 +34,333 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /pavilions:
+    get:
+      operationId: listPavilions
+      tags: [pavilions]
+      summary: List all pavilions
+      parameters:
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by interest category
+      responses:
+        "200":
+          description: List of pavilions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Pavilion"
+
+  /pavilions/{id}:
+    get:
+      operationId: getPavilion
+      tags: [pavilions]
+      summary: Get a pavilion by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Pavilion details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pavilion"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /pavilions/recommended:
+    post:
+      operationId: getRecommendedPavilions
+      tags: [pavilions]
+      summary: Get pavilions recommended based on visitor interests
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InterestInput"
+      responses:
+        "200":
+          description: Recommended pavilions sorted by relevance
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PavilionWithScore"
+
+  /pavilions/stats:
+    get:
+      operationId: getPavilionStats
+      tags: [pavilions]
+      summary: Get aggregated pavilion stats (categories count, avg wait time, etc.)
+      responses:
+        "200":
+          description: Aggregated stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PavilionStats"
+
+  /restaurants:
+    get:
+      operationId: listRestaurants
+      tags: [restaurants]
+      summary: List all restaurants and dining options
+      parameters:
+        - name: cuisine
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by cuisine type
+        - name: zone
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by expo zone/area
+      responses:
+        "200":
+          description: List of restaurants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Restaurant"
+
+  /restaurants/{id}:
+    get:
+      operationId: getRestaurant
+      tags: [restaurants]
+      summary: Get a restaurant by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Restaurant details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Restaurant"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /queue/status:
+    get:
+      operationId: getQueueStatus
+      tags: [queue]
+      summary: Get live queue and crowd status for all pavilions
+      responses:
+        "200":
+          description: Queue status for all pavilions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QueueStatus"
+
+  /queue/status/{pavilionId}:
+    get:
+      operationId: getQueueStatusByPavilion
+      tags: [queue]
+      summary: Get queue and crowd status for a specific pavilion
+      parameters:
+        - name: pavilionId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Queue status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueStatus"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
+  /interests/categories:
+    get:
+      operationId: listInterestCategories
+      tags: [interests]
+      summary: List all available interest categories
+      responses:
+        "200":
+          description: List of interest categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InterestCategory"
+
+  /gemini/conversations:
+    get:
+      operationId: listGeminiConversations
+      tags: [gemini]
+      summary: List all conversations
+      responses:
+        "200":
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GeminiConversation"
+    post:
+      operationId: createGeminiConversation
+      tags: [gemini]
+      summary: Create a new conversation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GeminiConversationInput"
+      responses:
+        "201":
+          description: Created conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiConversation"
+
+  /gemini/conversations/{id}:
+    get:
+      operationId: getGeminiConversation
+      tags: [gemini]
+      summary: Get conversation with messages
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Conversation with messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiConversationWithMessages"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+    delete:
+      operationId: deleteGeminiConversation
+      tags: [gemini]
+      summary: Delete a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiError"
+
+  /gemini/conversations/{id}/messages:
+    get:
+      operationId: listGeminiMessages
+      tags: [gemini]
+      summary: List messages in a conversation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GeminiMessage"
+    post:
+      operationId: sendGeminiMessage
+      tags: [gemini]
+      summary: Send a message and receive an AI response (SSE stream)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GeminiMessageInput"
+      responses:
+        "200":
+          description: SSE stream of assistant response chunks
+          content:
+            text/event-stream: {}
+
+  /gemini/generate-image:
+    post:
+      operationId: generateGeminiImage
+      tags: [gemini]
+      summary: Generate an image from a text prompt
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GeminiImageInput"
+      responses:
+        "200":
+          description: Generated image data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeminiImageOutput"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +371,341 @@ components:
       required:
         - status
 
+    Pavilion:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        nameAr:
+          type: string
+        country:
+          type: string
+        description:
+          type: string
+        descriptionAr:
+          type: string
+        categories:
+          type: array
+          items:
+            type: string
+        zone:
+          type: string
+        location:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        highlights:
+          type: array
+          items:
+            type: string
+        openingHours:
+          type: string
+      required:
+        - id
+        - name
+        - nameAr
+        - country
+        - description
+        - descriptionAr
+        - categories
+        - zone
+        - location
+        - highlights
+        - openingHours
+
+    PavilionWithScore:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        nameAr:
+          type: string
+        country:
+          type: string
+        description:
+          type: string
+        descriptionAr:
+          type: string
+        categories:
+          type: array
+          items:
+            type: string
+        zone:
+          type: string
+        location:
+          type: string
+        imageUrl:
+          type: ["string", "null"]
+        highlights:
+          type: array
+          items:
+            type: string
+        openingHours:
+          type: string
+        relevanceScore:
+          type: number
+        matchedInterests:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - name
+        - nameAr
+        - country
+        - description
+        - descriptionAr
+        - categories
+        - zone
+        - location
+        - highlights
+        - openingHours
+        - relevanceScore
+        - matchedInterests
+
+    PavilionStats:
+      type: object
+      properties:
+        totalPavilions:
+          type: integer
+        categoryCounts:
+          type: object
+          additionalProperties:
+            type: integer
+        avgWaitMinutes:
+          type: number
+        lowCrowdCount:
+          type: integer
+        highCrowdCount:
+          type: integer
+      required:
+        - totalPavilions
+        - categoryCounts
+        - avgWaitMinutes
+        - lowCrowdCount
+        - highCrowdCount
+
+    Restaurant:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        nameAr:
+          type: string
+        cuisine:
+          type: string
+        cuisineAr:
+          type: string
+        description:
+          type: string
+        zone:
+          type: string
+        location:
+          type: string
+        priceRange:
+          type: string
+          description: "$, $$, or $$$"
+        rating:
+          type: number
+        crowdLevel:
+          type: string
+          description: "low, medium, or high"
+        waitMinutes:
+          type: integer
+        imageUrl:
+          type: ["string", "null"]
+        tags:
+          type: array
+          items:
+            type: string
+        openingHours:
+          type: string
+      required:
+        - id
+        - name
+        - nameAr
+        - cuisine
+        - cuisineAr
+        - description
+        - zone
+        - location
+        - priceRange
+        - rating
+        - crowdLevel
+        - waitMinutes
+        - tags
+        - openingHours
+
+    QueueStatus:
+      type: object
+      properties:
+        pavilionId:
+          type: integer
+        pavilionName:
+          type: string
+        waitMinutes:
+          type: integer
+        crowdLevel:
+          type: string
+          description: "low, medium, or high"
+        crowdPercent:
+          type: integer
+          description: "0-100 crowd capacity percentage"
+        lastUpdated:
+          type: string
+          format: date-time
+        trend:
+          type: string
+          description: "increasing, stable, or decreasing"
+      required:
+        - pavilionId
+        - pavilionName
+        - waitMinutes
+        - crowdLevel
+        - crowdPercent
+        - lastUpdated
+        - trend
+
+    InterestCategory:
+      type: object
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        labelAr:
+          type: string
+        icon:
+          type: string
+        description:
+          type: string
+      required:
+        - id
+        - label
+        - labelAr
+        - icon
+        - description
+
+    InterestInput:
+      type: object
+      properties:
+        interests:
+          type: array
+          items:
+            type: string
+          description: List of interest category IDs
+      required:
+        - interests
+
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    GeminiConversation:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - createdAt
+
+    GeminiMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+        conversationId:
+          type: integer
+        role:
+          type: string
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - conversationId
+        - role
+        - content
+        - createdAt
+
+    GeminiConversationInput:
+      type: object
+      properties:
+        title:
+          type: string
+      required:
+        - title
+
+    GeminiMessageInput:
+      type: object
+      properties:
+        content:
+          type: string
+      required:
+        - content
+
+    GeminiConversationWithMessages:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/GeminiMessage"
+      required:
+        - id
+        - title
+        - createdAt
+        - messages
+
+    GeminiImageInput:
+      type: object
+      properties:
+        prompt:
+          type: string
+      required:
+        - prompt
+
+    GeminiImageOutput:
+      type: object
+      properties:
+        b64_json:
+          type: string
+        mimeType:
+          type: string
+      required:
+        - b64_json
+        - mimeType
+
+    GeminiError:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
