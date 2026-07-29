@@ -191,49 +191,55 @@ export function Pavilions() {
                     onClick={() => setSelectedPavilion(pavilion.id)}
                     className="expo-card overflow-hidden cursor-pointer group flex flex-col"
                   >
-                    {/* Top Area */}
-                    <div className={cn("h-32 relative p-4 flex flex-col justify-between bg-gradient-to-br", gradientClass)}>
+                    {/* Gradient Header — name + country inside */}
+                    <div className={cn("h-44 relative p-5 flex flex-col justify-between bg-gradient-to-br", gradientClass)}>
+                      {/* Top row: country + match badge */}
                       <div className="flex justify-between items-start">
-                        <span className="bg-white/90 backdrop-blur text-gray-900 text-xs font-bold px-2 py-1 rounded shadow-sm">
+                        <span className="bg-black/20 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1 rounded-full">
                           {pavilion.country}
                         </span>
                         {isRec && (
-                          <span className="bg-white/90 backdrop-blur text-[#08B0A0] text-xs font-bold px-2 py-1 rounded shadow-sm flex items-center">
-                            <Star className="w-3 h-3 mr-1 fill-current" />
-                            {Math.round(pavilion.relevanceScore * 100)}% Match
+                          <span className="bg-white/90 text-[#006C35] text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow">
+                            <Star className="w-3 h-3 fill-current" />
+                            {Math.round(pavilion.relevanceScore * 100)}%
                           </span>
                         )}
                       </div>
+
+                      {/* Bottom: name + zone */}
+                      <div>
+                        <h3 className="text-xl font-bold text-white drop-shadow mb-1 leading-tight">
+                          {isRtl ? pavilion.nameAr : pavilion.name}
+                        </h3>
+                        <div className="flex items-center gap-1 text-white/80 text-xs">
+                          <MapPin className="w-3 h-3" />
+                          {pavilion.zone}
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="p-5 flex-1 flex flex-col">
-                      <div className="flex gap-1.5 -mt-8 mb-3 flex-wrap">
+                    {/* Card body */}
+                    <div className="p-4 flex-1 flex flex-col gap-3">
+                      {/* Categories */}
+                      <div className="flex gap-1.5 flex-wrap">
                         {pavilion.categories.slice(0, 2).map((cat: string) => (
-                          <span key={cat} className={cn("text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm", categoryColors[cat] || "bg-gray-100 text-gray-600")}>
+                          <span key={cat} className={cn("text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wide", categoryColors[cat] || "bg-gray-100 text-gray-600")}>
                             {cat}
                           </span>
                         ))}
                       </div>
 
-                      <h3 className="text-xl font-bold mb-1 text-gray-900 group-hover:text-[#006C35] transition-colors">
-                        {isRtl ? pavilion.nameAr : pavilion.name}
-                      </h3>
-                      <div className="flex items-center text-sm text-gray-500 mb-4">
-                        <MapPin className="w-4 h-4 mr-1" />
-                        {pavilion.zone}
-                      </div>
-                      
-                      <div className="mt-auto flex items-center justify-between pt-4 border-t border-gray-100">
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm font-bold text-gray-700">
-                            {queue ? `${queue.waitMinutes}m` : '--'}
-                          </span>
+                      {/* Wait + crowd */}
+                      <div className="mt-auto flex items-center justify-between pt-3 border-t border-gray-100">
+                        <div className="flex items-center gap-1.5 text-gray-600">
+                          <Clock className="w-4 h-4 text-[#08B0A0]" />
+                          <span className="text-sm font-bold">{queue ? `${queue.waitMinutes} min` : '--'}</span>
+                          <span className="text-xs text-gray-400">{t("wait", "انتظار")}</span>
                         </div>
                         {queue && (
-                          <div className={cn("flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold border", crowdColor[queue.crowdLevel as keyof typeof crowdColor] || crowdColor.low)}>
+                          <div className={cn("flex items-center gap-1 text-xs px-3 py-1 rounded-full font-semibold border", crowdColor[queue.crowdLevel as keyof typeof crowdColor] || crowdColor.low)}>
                             <Users className="w-3 h-3" />
-                            <span className="capitalize">{queue.crowdLevel}</span>
+                            <span className="capitalize">{t(queue.crowdLevel, queue.crowdLevel === 'low' ? 'منخفض' : queue.crowdLevel === 'medium' ? 'متوسط' : 'مرتفع')}</span>
                           </div>
                         )}
                       </div>
