@@ -11,8 +11,32 @@ import { Input } from "@/components/ui/input";
 import { Search, MapPin, Clock, Users, Sparkles, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// Re-using the types from API implicitly.
-// Pavilion has id, name, nameAr, country, description, descriptionAr, categories, zone, location, imageUrl, highlights, openingHours.
+// Official Expo 2030 colors for categories
+const categoryColors: Record<string, string> = {
+  "sustainability": "bg-[#009943] text-white", // Nature secondary
+  "tech": "bg-[#009ED5] text-white", // Architecture secondary
+  "technology": "bg-[#009ED5] text-white", // Architecture secondary
+  "culture": "bg-[#F06724] text-white", // Tradition secondary
+  "arts": "bg-[#FFCC3F] text-gray-900", // Art secondary (dark text)
+  "family": "bg-[#87CABF] text-gray-900", // Science light (dark text)
+  "innovation": "bg-[#773A87] text-white", // Technology secondary
+  "business": "bg-[#009ED5] text-white", // Architecture secondary
+  "all": "bg-gray-100 text-gray-800"
+};
+
+// Zone gradients using official theme colors
+const zoneGradients: Record<string, string> = {
+  "Zone A": "from-[#006C35] to-[#4FB480]", // Nature
+  "Zone B": "from-[#1E87BD] to-[#4FB480]", // Architecture
+  "Zone C": "from-[#E8431B] to-[#F1881D]", // Tradition
+  "Zone D": "from-[#47266C] to-[#95629E]", // Technology
+  "Zone E": "from-[#08B0A0] to-[#8BCAB3]", // Science
+  "Zone F": "from-[#FAB712] to-[#FFEB72]", // Art
+  "Innovation Park": "from-[#47266C] to-[#95629E]", // Technology
+  "Sustainability Oasis": "from-[#006C35] to-[#4FB480]", // Nature
+  "Cultural District": "from-[#E8431B] to-[#F1881D]", // Tradition
+  "Global Plaza": "from-[#1E87BD] to-[#4FB480]" // Architecture
+};
 
 export function Pavilions() {
   const { t, isRtl } = useI18n();
@@ -43,8 +67,6 @@ export function Pavilions() {
   }, [urlInterests]);
 
   const handleRecommend = () => {
-    // For manual triggering without query params, we could show a dialog to pick, 
-    // but we'll use a placeholder array or the ones from the home page.
     recommendMutation.mutate({ data: { interests: ["sustainability", "tech"] } }, {
       onSuccess: (data) => {
         setRecommended(data);
@@ -63,12 +85,12 @@ export function Pavilions() {
   };
 
   const crowdColor = {
-    low: "text-expo-green bg-expo-green/10 border-expo-green/20",
-    medium: "text-expo-yellow bg-expo-yellow/10 border-expo-yellow/20",
-    high: "text-expo-orange bg-expo-orange/10 border-expo-orange/20"
+    low: "text-[#009943] bg-[#009943]/10 border-[#009943]/20",
+    medium: "text-[#F06724] bg-[#F06724]/10 border-[#F06724]/20",
+    high: "text-red-500 bg-red-50 border-red-100"
   };
 
-  const categories = ["all", "sustainability", "tech", "culture", "arts", "family", "innovation"];
+  const categories = ["all", "sustainability", "tech", "culture", "arts", "family", "innovation", "business"];
 
   return (
     <div className="container mx-auto px-4 py-8" dir={isRtl ? 'rtl' : 'ltr'}>
@@ -76,27 +98,34 @@ export function Pavilions() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>
-          <h1 className="text-4xl font-bold mb-2 text-white">{t("Pavilions", "الأجنحة")}</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-4xl font-bold mb-2 text-gray-900 inline-block relative">
+            {t("Pavilions", "الأجنحة")}
+            <div className="absolute -bottom-1 left-0 w-full h-1 bg-gradient-to-r from-[#006C35] to-[#4FB480] rounded-full" />
+          </h1>
+          <p className="text-gray-500 mt-2">
             {t("Explore world-class exhibitions and experiences.", "استكشف معارض وتجارب عالمية المستوى.")}
           </p>
         </div>
         
         <div className="flex items-center gap-3 w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
-            <Search className={cn("absolute top-3 w-4 h-4 text-muted-foreground", isRtl ? "right-3" : "left-3")} />
+            <Search className={cn("absolute top-3 w-4 h-4 text-gray-400", isRtl ? "right-3" : "left-3")} />
             <Input 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t("Search pavilions...", "ابحث عن جناح...")} 
-              className={cn(isRtl ? "pr-9" : "pl-9", "bg-white/5 border-white/10")}
+              className={cn(isRtl ? "pr-9" : "pl-9", "bg-white border-gray-200 shadow-sm rounded-full")}
             />
           </div>
-          <Button 
+          <button 
             onClick={recommended ? () => setRecommended(null) : handleRecommend}
-            variant={recommended ? "secondary" : "gradient"} 
-            className="shrink-0"
             disabled={recommendMutation.isPending}
+            className={cn(
+              "shrink-0 px-4 py-2 rounded-full font-medium transition-all shadow-sm flex items-center gap-2",
+              recommended 
+                ? "bg-gray-100 text-gray-700 hover:bg-gray-200" 
+                : "btn-gradient-orange hover:shadow-[0_4px_15px_rgba(232,67,27,0.3)]"
+            )}
           >
             {recommendMutation.isPending ? (
               <span className="animate-pulse">{t("Thinking...", "جاري التفكير...")}</span>
@@ -104,30 +133,34 @@ export function Pavilions() {
               t("Show All", "عرض الكل")
             ) : (
               <>
-                <Sparkles className={cn("w-4 h-4", isRtl ? "ml-2" : "mr-2")} />
+                <Sparkles className="w-4 h-4" />
                 {t("For Me", "مقترح لي")}
               </>
             )}
-          </Button>
+          </button>
         </div>
       </div>
 
       {/* Category filters */}
       {!recommended && (
         <div className="flex overflow-x-auto pb-4 mb-6 gap-2 no-scrollbar">
-          {categories.map(cat => (
-            <Badge 
-              key={cat}
-              variant={activeCategory === cat ? "glass" : "outline"}
-              className={cn(
-                "px-4 py-2 cursor-pointer whitespace-nowrap text-sm border-white/10 transition-colors",
-                activeCategory === cat ? "bg-white/20 text-white" : "hover:bg-white/5"
-              )}
-              onClick={() => setActiveCategory(cat)}
-            >
-              {cat === "all" ? t("All", "الكل") : t(cat.charAt(0).toUpperCase() + cat.slice(1), cat)}
-            </Badge>
-          ))}
+          {categories.map(cat => {
+            const isActive = activeCategory === cat;
+            const bgClass = isActive ? (categoryColors[cat] || "bg-gray-800 text-white") : "bg-white text-gray-600 border border-gray-200";
+            return (
+              <button 
+                key={cat}
+                className={cn(
+                  "px-5 py-2 cursor-pointer whitespace-nowrap text-sm rounded-full transition-all shadow-sm font-medium",
+                  bgClass,
+                  !isActive && "hover:bg-gray-50"
+                )}
+                onClick={() => setActiveCategory(cat)}
+              >
+                {cat === "all" ? t("All", "الكل") : t(cat.charAt(0).toUpperCase() + cat.slice(1), cat)}
+              </button>
+            )
+          })}
         </div>
       )}
 
@@ -138,14 +171,15 @@ export function Pavilions() {
             <Skeleton key={i} className="h-[300px] rounded-3xl" />
           ))
         ) : filteredPavilions?.length === 0 ? (
-          <div className="col-span-full py-20 text-center glass-panel rounded-3xl">
-            <h3 className="text-xl font-medium mb-2">{t("No pavilions found", "لم يتم العثور على أجنحة")}</h3>
-            <p className="text-muted-foreground">{t("Try adjusting your filters.", "حاول تعديل خيارات البحث.")}</p>
+          <div className="col-span-full py-20 text-center bg-white border border-gray-100 shadow-sm rounded-3xl">
+            <h3 className="text-xl font-medium mb-2 text-gray-800">{t("No pavilions found", "لم يتم العثور على أجنحة")}</h3>
+            <p className="text-gray-500">{t("Try adjusting your filters.", "حاول تعديل خيارات البحث.")}</p>
           </div>
         ) : (
           filteredPavilions?.map((pavilion, index) => {
             const queue = getQueueInfo(pavilion.id);
             const isRec = pavilion.relevanceScore && pavilion.relevanceScore > 0;
+            const gradientClass = zoneGradients[pavilion.zone] || "from-[#006C35] to-[#4FB480]";
             
             return (
               <Dialog key={pavilion.id} open={selectedPavilion === pavilion.id} onOpenChange={(open) => !open && setSelectedPavilion(null)}>
@@ -155,48 +189,49 @@ export function Pavilions() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
                     onClick={() => setSelectedPavilion(pavilion.id)}
-                    className="glass-card rounded-3xl overflow-hidden cursor-pointer group hover:border-white/30 transition-colors flex flex-col"
+                    className="expo-card overflow-hidden cursor-pointer group flex flex-col"
                   >
-                    {/* Image placeholder / banner */}
-                    <div className="h-40 bg-gradient-to-br from-white/5 to-white/10 relative p-4 flex flex-col justify-between">
+                    {/* Top Area */}
+                    <div className={cn("h-32 relative p-4 flex flex-col justify-between bg-gradient-to-br", gradientClass)}>
                       <div className="flex justify-between items-start">
-                        <Badge variant="glass" className="bg-black/40 border-none font-medium">
+                        <span className="bg-white/90 backdrop-blur text-gray-900 text-xs font-bold px-2 py-1 rounded shadow-sm">
                           {pavilion.country}
-                        </Badge>
+                        </span>
                         {isRec && (
-                          <Badge variant="gradient" className="bg-gradient-to-r from-expo-teal to-expo-blue border-none">
+                          <span className="bg-white/90 backdrop-blur text-[#08B0A0] text-xs font-bold px-2 py-1 rounded shadow-sm flex items-center">
                             <Star className="w-3 h-3 mr-1 fill-current" />
                             {Math.round(pavilion.relevanceScore * 100)}% Match
-                          </Badge>
+                          </span>
                         )}
-                      </div>
-                      <div className="flex gap-2 mt-auto">
-                        {pavilion.categories.slice(0, 2).map((cat: string) => (
-                          <Badge key={cat} variant="outline" className="bg-black/30 border-white/10 text-white/80 text-xs">
-                            {cat}
-                          </Badge>
-                        ))}
                       </div>
                     </div>
 
                     <div className="p-5 flex-1 flex flex-col">
-                      <h3 className="text-xl font-bold mb-1 text-white group-hover:text-expo-teal transition-colors">
+                      <div className="flex gap-1.5 -mt-8 mb-3 flex-wrap">
+                        {pavilion.categories.slice(0, 2).map((cat: string) => (
+                          <span key={cat} className={cn("text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm", categoryColors[cat] || "bg-gray-100 text-gray-600")}>
+                            {cat}
+                          </span>
+                        ))}
+                      </div>
+
+                      <h3 className="text-xl font-bold mb-1 text-gray-900 group-hover:text-[#006C35] transition-colors">
                         {isRtl ? pavilion.nameAr : pavilion.name}
                       </h3>
-                      <div className="flex items-center text-sm text-muted-foreground mb-4">
+                      <div className="flex items-center text-sm text-gray-500 mb-4">
                         <MapPin className="w-4 h-4 mr-1" />
-                        {pavilion.zone} • {pavilion.location}
+                        {pavilion.zone}
                       </div>
                       
-                      <div className="mt-auto flex items-center justify-between pt-4 border-t border-white/5">
+                      <div className="mt-auto flex items-center justify-between pt-4 border-t border-gray-100">
                         <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm font-medium">
+                          <Clock className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm font-bold text-gray-700">
                             {queue ? `${queue.waitMinutes}m` : '--'}
                           </span>
                         </div>
                         {queue && (
-                          <div className={cn("flex items-center gap-1 text-xs px-2 py-1 rounded-md border", crowdColor[queue.crowdLevel as keyof typeof crowdColor] || crowdColor.low)}>
+                          <div className={cn("flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold border", crowdColor[queue.crowdLevel as keyof typeof crowdColor] || crowdColor.low)}>
                             <Users className="w-3 h-3" />
                             <span className="capitalize">{queue.crowdLevel}</span>
                           </div>
@@ -206,40 +241,40 @@ export function Pavilions() {
                   </motion.div>
                 </DialogTrigger>
 
-                <DialogContent className="max-w-2xl" dir={isRtl ? 'rtl' : 'ltr'}>
-                  <div className="h-48 -mt-6 -mx-6 mb-6 bg-gradient-to-br from-expo-teal/20 to-expo-blue/20 rounded-t-3xl relative">
-                    {/* Fake image cover */}
+                <DialogContent className="max-w-2xl bg-white border-none rounded-3xl" dir={isRtl ? 'rtl' : 'ltr'}>
+                  <div className={cn("h-48 -mt-6 -mx-6 mb-6 rounded-t-3xl relative bg-gradient-to-br", gradientClass)}>
+                    <div className="absolute inset-0 bg-white/20 backdrop-blur-[2px]" />
                   </div>
                   <DialogHeader>
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="glass">{pavilion.country}</Badge>
-                      <Badge variant="outline">{pavilion.zone}</Badge>
+                      <Badge variant="secondary" className="bg-gray-100 hover:bg-gray-200 text-gray-800">{pavilion.country}</Badge>
+                      <Badge variant="outline" className="border-gray-200 text-gray-600">{pavilion.zone}</Badge>
                     </div>
-                    <DialogTitle className="text-3xl mb-2">{isRtl ? pavilion.nameAr : pavilion.name}</DialogTitle>
-                    <DialogDescription className="text-base text-white/70">
+                    <DialogTitle className="text-3xl mb-2 text-gray-900">{isRtl ? pavilion.nameAr : pavilion.name}</DialogTitle>
+                    <DialogDescription className="text-base text-gray-600">
                       {isRtl ? pavilion.descriptionAr : pavilion.description}
                     </DialogDescription>
                   </DialogHeader>
 
                   <div className="grid grid-cols-2 gap-4 mt-6">
-                    <div className="glass-panel p-4 rounded-2xl flex flex-col items-center justify-center text-center">
-                      <Clock className="w-6 h-6 text-expo-teal mb-2" />
-                      <span className="text-sm text-muted-foreground mb-1">{t("Wait Time", "وقت الانتظار")}</span>
-                      <span className="text-xl font-bold text-white">{queue ? `${queue.waitMinutes} mins` : t("Unknown", "غير معروف")}</span>
+                    <div className="bg-gray-50 border border-gray-100 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+                      <Clock className="w-6 h-6 text-[#08B0A0] mb-2" />
+                      <span className="text-sm text-gray-500 mb-1">{t("Wait Time", "وقت الانتظار")}</span>
+                      <span className="text-xl font-bold text-gray-900">{queue ? `${queue.waitMinutes} mins` : t("Unknown", "غير معروف")}</span>
                     </div>
-                    <div className="glass-panel p-4 rounded-2xl flex flex-col items-center justify-center text-center">
-                      <Users className="w-6 h-6 text-expo-blue mb-2" />
-                      <span className="text-sm text-muted-foreground mb-1">{t("Crowd Level", "مستوى الازدحام")}</span>
-                      <span className="text-xl font-bold text-white capitalize">{queue ? queue.crowdLevel : t("Unknown", "غير معروف")}</span>
+                    <div className="bg-gray-50 border border-gray-100 p-4 rounded-2xl flex flex-col items-center justify-center text-center">
+                      <Users className="w-6 h-6 text-[#E8431B] mb-2" />
+                      <span className="text-sm text-gray-500 mb-1">{t("Crowd Level", "مستوى الازدحام")}</span>
+                      <span className="text-xl font-bold text-gray-900 capitalize">{queue ? queue.crowdLevel : t("Unknown", "غير معروف")}</span>
                     </div>
                   </div>
 
                   <div className="mt-6">
-                    <h4 className="font-semibold mb-3">{t("Highlights", "أبرز المعالم")}</h4>
+                    <h4 className="font-bold text-gray-900 mb-3">{t("Highlights", "أبرز المعالم")}</h4>
                     <ul className="space-y-2">
                       {pavilion.highlights.map((highlight: string, idx: number) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
-                          <div className="w-1.5 h-1.5 rounded-full bg-expo-teal mt-1.5 shrink-0" />
+                        <li key={idx} className="flex items-start gap-2 text-sm text-gray-600">
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#47266C] mt-1.5 shrink-0" />
                           {highlight}
                         </li>
                       ))}
@@ -247,8 +282,8 @@ export function Pavilions() {
                   </div>
 
                   <div className="mt-8 flex justify-end gap-3">
-                    <Button variant="outline" className="rounded-xl">{t("Close", "إغلاق")}</Button>
-                    <Button variant="gradient" className="rounded-xl">{t("Navigate Here", "الذهاب إلى هنا")}</Button>
+                    <Button variant="outline" className="rounded-full border-gray-200 text-gray-700">{t("Close", "إغلاق")}</Button>
+                    <button className="btn-gradient-green px-6 py-2 rounded-full font-medium">{t("Navigate Here", "الذهاب إلى هنا")}</button>
                   </div>
                 </DialogContent>
               </Dialog>

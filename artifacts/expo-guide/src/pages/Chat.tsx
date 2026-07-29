@@ -78,7 +78,6 @@ export function Chat() {
     setStreamingMessage("");
     setIsStreaming(true);
 
-    // Optimistically add user message to UI (we won't have the DB id yet, but we show it)
     const tempUserMsg = { id: -1, conversationId: activeConvId, role: "user", content: userMessage, createdAt: new Date().toISOString() };
     queryClient.setQueryData(getGetGeminiConversationQueryKey(activeConvId), (old: any) => {
       if (!old) return old;
@@ -121,7 +120,6 @@ export function Chat() {
                 setStreamingMessage(fullResponse);
               }
               if (parsed.done) {
-                // Stream completed, refetch conversation to get final DB messages
                 queryClient.invalidateQueries({ queryKey: getGetGeminiConversationQueryKey(activeConvId) });
                 setStreamingMessage("");
                 setIsStreaming(false);
@@ -163,19 +161,18 @@ export function Chat() {
   }
 
   return (
-    <div className="flex-1 flex flex-col md:flex-row h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)]" dir={isRtl ? 'rtl' : 'ltr'}>
+    <div className="flex-1 flex flex-col md:flex-row h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)] bg-gray-50/50" dir={isRtl ? 'rtl' : 'ltr'}>
       
       {/* Sidebar */}
-      <div className="w-full md:w-80 glass-panel border-r border-white/5 p-4 flex flex-col gap-4 max-h-48 md:max-h-full overflow-y-auto">
-        <Button 
+      <div className="w-full md:w-80 bg-white border-r border-gray-100 p-4 flex flex-col gap-4 max-h-48 md:max-h-full overflow-y-auto shadow-[2px_0_15px_rgba(0,0,0,0.02)] z-10">
+        <button 
           onClick={handleNewChat} 
-          variant="gradient" 
-          className="w-full rounded-xl flex items-center gap-2"
           disabled={createConv.isPending}
+          className="btn-gradient-green w-full py-3 rounded-xl flex items-center justify-center gap-2 font-medium hover:shadow-[0_4px_15px_rgba(0,108,53,0.3)] transition-shadow"
         >
           <Plus className="w-5 h-5" />
           {t("New Chat", "محادثة جديدة")}
-        </Button>
+        </button>
 
         <div className="flex-1 overflow-y-auto space-y-2">
           {loadingConvs ? (
@@ -183,7 +180,7 @@ export function Chat() {
               <Skeleton key={i} className="h-14 rounded-xl" />
             ))
           ) : conversations && conversations.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">
+            <div className="text-center py-8 text-gray-400 text-sm">
               {t("No conversations yet.", "لا توجد محادثات بعد.")}
             </div>
           ) : (
@@ -192,11 +189,13 @@ export function Chat() {
                 key={conv.id}
                 className={cn(
                   "p-3 rounded-xl cursor-pointer flex items-center justify-between gap-2 transition-colors group",
-                  activeConvId === conv.id ? "bg-white/10 text-white" : "text-muted-foreground hover:bg-white/5"
+                  activeConvId === conv.id 
+                    ? "bg-[#006C35]/10 text-[#006C35] font-medium" 
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 )}
                 onClick={() => setActiveConvId(conv.id)}
               >
-                <div className="flex items-center gap-2 flex-1 min-w-0">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
                   <MessageSquare className="w-4 h-4 shrink-0" />
                   <span className="text-sm truncate">{conv.title}</span>
                 </div>
@@ -205,9 +204,9 @@ export function Chat() {
                     e.stopPropagation();
                     handleDeleteChat(conv.id);
                   }}
-                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/10 rounded"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-md"
                 >
-                  <Trash className="w-4 h-4 text-destructive" />
+                  <Trash className="w-4 h-4" />
                 </button>
               </div>
             ))
@@ -216,23 +215,24 @@ export function Chat() {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col bg-white relative">
         {!activeConvId ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-expo-teal to-expo-blue flex items-center justify-center mb-6 shadow-2xl shadow-expo-teal/30">
-              <Sparkles className="w-10 h-10 text-white" />
-            </div>
-            <h2 className="text-3xl font-bold mb-4">{t("ExpoGuide AI", "خريطة الذكاء الاصطناعي")}</h2>
-            <p className="text-muted-foreground max-w-md mb-6">
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-white/50 backdrop-blur-sm z-10">
+            <img src="/expo2030-logo.png" alt="Riyadh Expo 2030" className="h-20 w-auto mb-6" />
+            <h2 className="text-3xl font-bold mb-4 text-gray-900">{t("ExpoGuide AI", "المرشد الذكي")}</h2>
+            <p className="text-gray-500 max-w-md mb-8 text-lg">
               {t("Your intelligent companion at Riyadh Expo 2030. Ask me anything about pavilions, restaurants, events, or navigation.", "مرافقك الذكي في إكسبو الرياض 2030. اسألني عن أي شيء حول الأجنحة أو المطاعم أو الفعاليات أو التنقل.")}
             </p>
-            <Button variant="gradient" onClick={handleNewChat} className="rounded-2xl px-8">
-              <Plus className="w-5 h-5 mr-2" />
+            <button 
+              onClick={handleNewChat} 
+              className="btn-gradient-green px-8 py-3 rounded-full flex items-center gap-2 font-medium text-lg hover:shadow-[0_8px_25px_rgba(0,108,53,0.3)] transition-all transform hover:-translate-y-0.5"
+            >
+              <Plus className="w-5 h-5" />
               {t("Start Your Journey", "ابدأ رحلتك")}
-            </Button>
+            </button>
           </div>
         ) : loadingConv ? (
-          <div className="flex-1 p-6 space-y-4">
+          <div className="flex-1 p-6 space-y-4 z-10">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className={cn("flex gap-3", i % 2 === 0 ? "justify-end" : "justify-start")}>
                 <Skeleton className="h-16 w-3/4 rounded-2xl" />
@@ -241,10 +241,10 @@ export function Chat() {
           </div>
         ) : (
           <>
-            <ScrollArea className="flex-1 p-4 md:p-6" ref={scrollRef}>
-              <div className="space-y-4 max-w-4xl mx-auto">
+            <ScrollArea className="flex-1 p-4 md:p-6 z-10" ref={scrollRef}>
+              <div className="space-y-6 max-w-4xl mx-auto">
                 {allMessages.length === 0 && (
-                  <div className="text-center py-12 text-muted-foreground">
+                  <div className="text-center py-12 text-gray-400">
                     {t("Send a message to start the conversation.", "أرسل رسالة لبدء المحادثة.")}
                   </div>
                 )}
@@ -260,25 +260,25 @@ export function Chat() {
                     )}
                   >
                     {msg.role === "assistant" && (
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-expo-teal to-expo-blue flex items-center justify-center shrink-0">
+                      <div className="w-10 h-10 rounded-full gradient-nature flex items-center justify-center shrink-0 shadow-sm mt-auto">
                         <Sparkles className="w-5 h-5 text-white" />
                       </div>
                     )}
                     <div 
                       className={cn(
-                        "px-5 py-3 rounded-2xl max-w-[80%] break-words",
+                        "px-5 py-3.5 rounded-2xl max-w-[80%] break-words shadow-sm text-[15px] leading-relaxed",
                         msg.role === "user" 
-                          ? "bg-gradient-to-r from-expo-green to-expo-teal text-white" 
-                          : "glass-panel text-white"
+                          ? "gradient-nature text-white rounded-br-sm" 
+                          : "bg-white border-l-4 border-l-[#006C35] text-gray-800 rounded-bl-sm"
                       )}
                     >
-                      <div className="prose prose-invert prose-sm max-w-none">
+                      <div className="prose prose-sm max-w-none">
                         {msg.content}
                       </div>
                     </div>
                     {msg.role === "user" && (
-                      <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                        <div className="text-sm font-bold text-white">U</div>
+                      <div className="w-10 h-10 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0 mt-auto">
+                        <div className="text-sm font-bold text-gray-500">U</div>
                       </div>
                     )}
                   </motion.div>
@@ -287,25 +287,24 @@ export function Chat() {
             </ScrollArea>
 
             {/* Input */}
-            <div className="p-4 glass-panel border-t border-white/5">
-              <div className="max-w-4xl mx-auto flex gap-3">
+            <div className="p-4 bg-white/80 backdrop-blur-md border-t border-gray-100 z-10">
+              <div className="max-w-4xl mx-auto flex gap-3 relative">
                 <Input 
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   onKeyDown={handleKeyPress}
                   placeholder={t("Ask me anything about Expo 2030...", "اسألني أي شيء عن إكسبو 2030...")}
-                  className="flex-1 bg-white/5 border-white/10 rounded-2xl px-4"
+                  className="flex-1 bg-white border-gray-200 rounded-full pl-5 pr-14 py-6 shadow-sm text-base focus-visible:ring-[#006C35] focus-visible:border-[#006C35]"
                   disabled={isStreaming}
                 />
-                <Button 
+                <button 
                   onClick={handleSendMessage} 
                   disabled={!message.trim() || isStreaming}
-                  variant="gradient"
-                  size="icon"
-                  className="shrink-0 rounded-2xl w-12 h-12"
+                  className="absolute right-2 top-2 bottom-2 aspect-square rounded-full btn-gradient-green flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md transition-shadow"
+                  style={{ right: isRtl ? 'auto' : '0.5rem', left: isRtl ? '0.5rem' : 'auto' }}
                 >
-                  <Send className="w-5 h-5" />
-                </Button>
+                  <Send className={cn("w-4 h-4", isRtl && "rotate-180")} />
+                </button>
               </div>
             </div>
           </>
