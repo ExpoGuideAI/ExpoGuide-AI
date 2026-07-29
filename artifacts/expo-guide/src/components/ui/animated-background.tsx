@@ -106,7 +106,19 @@ const TechLeaf = ({ className }: { className?: string }) => (
 
 export function AnimatedBackground({ className }: BackgroundProps) {
   return (
-    <div className={cn("fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-white", className)}>
+    <div className={cn("fixed inset-0 overflow-hidden pointer-events-none -z-10", className)}
+      style={{
+        background: `
+          radial-gradient(ellipse 80% 60% at 10% 0%, rgba(79,180,128,0.18) 0%, transparent 60%),
+          radial-gradient(ellipse 60% 50% at 95% 10%, rgba(30,135,189,0.14) 0%, transparent 55%),
+          radial-gradient(ellipse 50% 60% at 0% 55%, rgba(250,183,18,0.12) 0%, transparent 55%),
+          radial-gradient(ellipse 70% 50% at 90% 70%, rgba(232,67,27,0.10) 0%, transparent 55%),
+          radial-gradient(ellipse 55% 45% at 50% 100%, rgba(71,38,108,0.10) 0%, transparent 55%),
+          radial-gradient(ellipse 45% 40% at 40% 45%, rgba(8,176,160,0.08) 0%, transparent 50%),
+          #fafaf8
+        `
+      }}
+    >
       {/* Nature leaf - top left */}
       <motion.div
         animate={{ y: [0, -20, 0], rotate: [0, 10, 0] }}
