@@ -165,6 +165,10 @@ export const GetQueueStatusResponseItem = zod.object({
   "waitMinutes": zod.number().int(),
   "crowdLevel": zod.string().describe('low, medium, or high'),
   "crowdPercent": zod.number().int().describe('0-100 crowd capacity percentage'),
+  "peopleCount": zod.number().int().describe('Current estimated people count'),
+  "queueLength": zod.number().int().describe('Current queue length'),
+  "hour": zod.number().int().describe('Hour of last recorded measurement (0-23)'),
+  "day": zod.string().describe('Day of last recorded measurement'),
   "lastUpdated": zod.coerce.date(),
   "trend": zod.string().describe('increasing, stable, or decreasing')
 })
@@ -184,9 +188,41 @@ export const GetQueueStatusByPavilionResponse = zod.object({
   "waitMinutes": zod.number().int(),
   "crowdLevel": zod.string().describe('low, medium, or high'),
   "crowdPercent": zod.number().int().describe('0-100 crowd capacity percentage'),
+  "peopleCount": zod.number().int().describe('Current estimated people count'),
+  "queueLength": zod.number().int().describe('Current queue length'),
+  "hour": zod.number().int().describe('Hour of last recorded measurement (0-23)'),
+  "day": zod.string().describe('Day of last recorded measurement'),
   "lastUpdated": zod.coerce.date(),
   "trend": zod.string().describe('increasing, stable, or decreasing')
 })
+
+
+/**
+ * Implements the RandomForestRegressor prediction logic from expo(1).ipynb — derives queue_length, crowd_level and wait_minutes from people_count, hour, and day.
+ * @summary Predict wait time from people count (notebook ML logic)
+ */
+export const predictQueueWaitBodyPeopleCountMin = 0;
+
+export const predictQueueWaitBodyHourMin = 0;
+export const predictQueueWaitBodyHourMax = 23;
+
+
+
+export const PredictQueueWaitBody = zod.object({
+  "people_count": zod.number().int().min(predictQueueWaitBodyPeopleCountMin).describe('Number of people currently observed at the pavilion'),
+  "hour": zod.number().int().min(predictQueueWaitBodyHourMin).max(predictQueueWaitBodyHourMax).optional().describe('Hour of day (0-23). Defaults to current hour.'),
+  "day": zod.string().optional().describe('Day of week (e.g. Monday). Defaults to current day.')
+}).describe('Input for the ML-based queue wait prediction (expo(1).ipynb logic)')
+
+export const PredictQueueWaitResponse = zod.object({
+  "people_count": zod.number().int(),
+  "queue_length": zod.number().int().describe('Derived as people_count × 0.35'),
+  "wait_minutes": zod.number().int().describe('Predicted wait time in minutes'),
+  "crowd_level": zod.string().describe('low (<70), medium (<180), or high (≥180)'),
+  "crowd_percent": zod.number().int().describe('Estimated crowd capacity percentage (0-95)'),
+  "hour": zod.number().int(),
+  "day": zod.string()
+}).describe('Predicted queue metrics derived from notebook RandomForest logic')
 
 
 /**

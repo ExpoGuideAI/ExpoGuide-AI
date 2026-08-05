@@ -37,6 +37,8 @@ import type {
   Pavilion,
   PavilionStats,
   PavilionWithScore,
+  QueuePredictInput,
+  QueuePrediction,
   QueueStatus,
   Restaurant
 } from './api.schemas';
@@ -769,6 +771,78 @@ export function useGetQueueStatusByPavilion<TData = Awaited<ReturnType<typeof ge
 
 
 
+
+export const getPredictQueueWaitUrl = () => {
+
+
+
+
+  return `/api/queue/predict`
+}
+
+/**
+ * Implements the RandomForestRegressor prediction logic from expo(1).ipynb — derives queue_length, crowd_level and wait_minutes from people_count, hour, and day.
+ * @summary Predict wait time from people count (notebook ML logic)
+ */
+export const predictQueueWait = async (queuePredictInput: QueuePredictInput, options?: Parameters<typeof customFetch>[1]): Promise<QueuePrediction> => {
+
+  return customFetch<QueuePrediction>(getPredictQueueWaitUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(queuePredictInput)
+  }
+);}
+
+
+
+
+
+export const getPredictQueueWaitMutationOptions = <TError = ErrorType<ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof predictQueueWait>>, TError,{data: BodyType<QueuePredictInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof predictQueueWait>>, TError,{data: BodyType<QueuePredictInput>}, TContext> => {
+
+const mutationKey = ['predictQueueWait'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof predictQueueWait>>, {data: BodyType<QueuePredictInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  predictQueueWait(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PredictQueueWaitMutationResult = NonNullable<Awaited<ReturnType<typeof predictQueueWait>>>
+    export type PredictQueueWaitMutationBody = BodyType<QueuePredictInput>
+    export type PredictQueueWaitMutationError = ErrorType<ApiError>
+
+    /**
+ * @summary Predict wait time from people count (notebook ML logic)
+ */
+export const usePredictQueueWait = <TError = ErrorType<ApiError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof predictQueueWait>>, TError,{data: BodyType<QueuePredictInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof predictQueueWait>>,
+        TError,
+        {data: BodyType<QueuePredictInput>},
+        TContext
+      > => {
+      return useMutation(getPredictQueueWaitMutationOptions(options));
+    }
 
 export const getListInterestCategoriesUrl = () => {
 

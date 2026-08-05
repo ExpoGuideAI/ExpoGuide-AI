@@ -24,5 +24,7 @@ export * from './pavilion';
 export * from './pavilionStats';
 export * from './pavilionStatsCategoryCounts';
 export * from './pavilionWithScore';
+export * from './queuePredictInput';
+export * from './queuePrediction';
 export * from './queueStatus';
 export * from './restaurant';

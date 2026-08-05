@@ -209,6 +209,32 @@ paths:
               schema:
                 $ref: "#/components/schemas/ApiError"
 
+  /queue/predict:
+    post:
+      operationId: predictQueueWait
+      tags: [queue]
+      summary: Predict wait time from people count (notebook ML logic)
+      description: Implements the RandomForestRegressor prediction logic from expo(1).ipynb — derives queue_length, crowd_level and wait_minutes from people_count, hour, and day.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QueuePredictInput"
+      responses:
+        "200":
+          description: Prediction result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueuePrediction"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApiError"
+
   /interests/categories:
     get:
       operationId: listInterestCategories
@@ -557,6 +583,18 @@ components:
         crowdPercent:
           type: integer
           description: "0-100 crowd capacity percentage"
+        peopleCount:
+          type: integer
+          description: "Current estimated people count"
+        queueLength:
+          type: integer
+          description: "Current queue length"
+        hour:
+          type: integer
+          description: "Hour of last recorded measurement (0-23)"
+        day:
+          type: string
+          description: "Day of last recorded measurement"
         lastUpdated:
           type: string
           format: date-time
@@ -569,8 +607,62 @@ components:
         - waitMinutes
         - crowdLevel
         - crowdPercent
+        - peopleCount
+        - queueLength
+        - hour
+        - day
         - lastUpdated
         - trend
+
+    QueuePredictInput:
+      type: object
+      description: Input for the ML-based queue wait prediction (expo(1).ipynb logic)
+      properties:
+        people_count:
+          type: integer
+          minimum: 0
+          description: "Number of people currently observed at the pavilion"
+        hour:
+          type: integer
+          minimum: 0
+          maximum: 23
+          description: "Hour of day (0-23). Defaults to current hour."
+        day:
+          type: string
+          description: "Day of week (e.g. Monday). Defaults to current day."
+      required:
+        - people_count
+
+    QueuePrediction:
+      type: object
+      description: Predicted queue metrics derived from notebook RandomForest logic
+      properties:
+        people_count:
+          type: integer
+        queue_length:
+          type: integer
+          description: "Derived as people_count × 0.35"
+        wait_minutes:
+          type: integer
+          description: "Predicted wait time in minutes"
+        crowd_level:
+          type: string
+          description: "low (<70), medium (<180), or high (≥180)"
+        crowd_percent:
+          type: integer
+          description: "Estimated crowd capacity percentage (0-95)"
+        hour:
+          type: integer
+        day:
+          type: string
+      required:
+        - people_count
+        - queue_length
+        - wait_minutes
+        - crowd_level
+        - crowd_percent
+        - hour
+        - day
 
     InterestCategory:
       type: object

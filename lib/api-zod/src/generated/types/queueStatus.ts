@@ -14,6 +14,14 @@ export interface QueueStatus {
   crowdLevel: string;
   /** 0-100 crowd capacity percentage */
   crowdPercent: number;
+  /** Current estimated people count */
+  peopleCount: number;
+  /** Current queue length */
+  queueLength: number;
+  /** Hour of last recorded measurement (0-23) */
+  hour: number;
+  /** Day of last recorded measurement */
+  day: string;
   lastUpdated: Date;
   /** increasing, stable, or decreasing */
   trend: string;

@@ -82,9 +82,53 @@ export interface QueueStatus {
   crowdLevel: string;
   /** 0-100 crowd capacity percentage */
   crowdPercent: number;
+  /** Current estimated people count */
+  peopleCount: number;
+  /** Current queue length */
+  queueLength: number;
+  /** Hour of last recorded measurement (0-23) */
+  hour: number;
+  /** Day of last recorded measurement */
+  day: string;
   lastUpdated: string;
   /** increasing, stable, or decreasing */
   trend: string;
+}
+
+/**
+ * Input for the ML-based queue wait prediction (expo(1).ipynb logic)
+ */
+export interface QueuePredictInput {
+  /**
+     * Number of people currently observed at the pavilion
+     * @minimum 0
+     */
+  people_count: number;
+  /**
+     * Hour of day (0-23). Defaults to current hour.
+     * @minimum 0
+     * @maximum 23
+     */
+  hour?: number;
+  /** Day of week (e.g. Monday). Defaults to current day. */
+  day?: string;
+}
+
+/**
+ * Predicted queue metrics derived from notebook RandomForest logic
+ */
+export interface QueuePrediction {
+  people_count: number;
+  /** Derived as people_count × 0.35 */
+  queue_length: number;
+  /** Predicted wait time in minutes */
+  wait_minutes: number;
+  /** low (<70), medium (<180), or high (≥180) */
+  crowd_level: string;
+  /** Estimated crowd capacity percentage (0-95) */
+  crowd_percent: number;
+  hour: number;
+  day: string;
 }
 
 export interface InterestCategory {
