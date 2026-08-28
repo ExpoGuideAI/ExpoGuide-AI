@@ -27,6 +27,7 @@ export function Chat() {
   const [message, setMessage] = useState("");
   const [streamingMessage, setStreamingMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [isStartingConversation, setIsStartingConversation] = useState(false);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -48,23 +49,28 @@ export function Chat() {
     }
   }, [activeConv?.messages, streamingMessage]);
 
+  const createConversation = async () => {
+    // The conversation must exist in the database before it becomes active.
+    // mutateAsync makes failures catchable instead of silently locking the UI.
+    const conv = await createConv.mutateAsync({
+      data: { title: t("New Conversation", "محادثة جديدة") }
+    });
+
+    queryClient.invalidateQueries({ queryKey: getListGeminiConversationsQueryKey() });
+    queryClient.setQueryData(getGetGeminiConversationQueryKey(conv.id), {
+      ...conv,
+      messages: [],
+    });
+    setActiveConvId(conv.id);
+    return conv;
+  };
+
   const handleNewChat = async () => {
-    if (createConv.isPending) return;
+    if (createConv.isPending || isStartingConversation) return;
 
     try {
-      // The conversation must exist in the database before it becomes active.
-      // mutateAsync also makes failures catchable instead of leaving the UI in
-      // a loading/unclickable state.
-      const conv = await createConv.mutateAsync({
-        data: { title: t("New Conversation", "محادثة جديدة") }
-      });
-
-      queryClient.invalidateQueries({ queryKey: getListGeminiConversationsQueryKey() });
-      queryClient.setQueryData(getGetGeminiConversationQueryKey(conv.id), {
-        ...conv,
-        messages: [],
-      });
-      setActiveConvId(conv.id);
+      setIsStartingConversation(true);
+      await createConversation();
       setMessage("");
       setStreamingMessage("");
     } catch (error) {
@@ -74,6 +80,8 @@ export function Chat() {
         title: t("Could not start chat", "تعذر بدء المحادثة"),
         description: t("Please try again.", "يرجى المحاولة مرة أخرى."),
       });
+    } finally {
+      setIsStartingConversation(false);
     }
   };
 
@@ -98,22 +106,40 @@ export function Chat() {
   };
 
   const handleSendMessage = async () => {
-    if (!message.trim() || !activeConvId || isStreaming) return;
+    if (!message.trim() || isStreaming || isStartingConversation || createConv.isPending) return;
 
     const userMessage = message.trim();
     setMessage("");
     setStreamingMessage("");
-    setIsStreaming(true);
-
-    const tempUserMsg = { id: -1, conversationId: activeConvId, role: "user", content: userMessage, createdAt: new Date().toISOString() };
-    queryClient.setQueryData(getGetGeminiConversationQueryKey(activeConvId), (old: any) => {
-      if (!old) return old;
-      return { ...old, messages: [...old.messages, tempUserMsg] };
-    });
+    let conversationId = activeConvId;
+    let createdConversation = false;
 
     try {
+      // Allow sending directly from the empty state. Create the conversation
+      // first, then continue with the same message and returned ID.
+      if (!conversationId) {
+        setIsStartingConversation(true);
+        const conv = await createConversation();
+        conversationId = conv.id;
+        createdConversation = true;
+      }
+
+      setIsStreaming(true);
+
+      const tempUserMsg = {
+        id: -1,
+        conversationId,
+        role: "user",
+        content: userMessage,
+        createdAt: new Date().toISOString()
+      };
+      queryClient.setQueryData(getGetGeminiConversationQueryKey(conversationId), (old: any) => {
+        if (!old) return old;
+        return { ...old, messages: [...old.messages, tempUserMsg] };
+      });
+
       abortControllerRef.current = new AbortController();
-      const response = await fetch(`/api/gemini/conversations/${activeConvId}/messages`, {
+      const response = await fetch(`/api/gemini/conversations/${conversationId}/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content: userMessage }),
@@ -147,7 +173,7 @@ export function Chat() {
                 setStreamingMessage(fullResponse);
               }
               if (parsed.done) {
-                queryClient.invalidateQueries({ queryKey: getGetGeminiConversationQueryKey(activeConvId) });
+                queryClient.invalidateQueries({ queryKey: getGetGeminiConversationQueryKey(conversationId) });
                 break;
               }
             } catch (e) {
@@ -161,7 +187,9 @@ export function Chat() {
         console.log("Stream aborted");
       } else {
         console.error("Stream error:", err);
-        queryClient.invalidateQueries({ queryKey: getGetGeminiConversationQueryKey(activeConvId) });
+        if (conversationId) {
+          queryClient.invalidateQueries({ queryKey: getGetGeminiConversationQueryKey(conversationId) });
+        }
         toast({
           variant: "destructive",
           title: t("Message failed", "تعذر إرسال الرسالة"),
@@ -174,6 +202,10 @@ export function Chat() {
       setIsStreaming(false);
       setStreamingMessage("");
       abortControllerRef.current = null;
+      setIsStartingConversation(false);
+      if (createdConversation && !conversationId) {
+        setMessage(userMessage);
+      }
     }
   };
 
@@ -250,9 +282,9 @@ export function Chat() {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col bg-white relative">
+      <div className="flex-1 flex flex-col bg-white relative min-h-0">
         {!activeConvId ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-white/50 backdrop-blur-sm z-10">
+          <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-8 text-center bg-white/50 backdrop-blur-sm z-10">
             <img src="/expo2030-logo.png" alt="Riyadh Expo 2030" className="h-20 w-auto mb-6" />
             <h2 className="text-3xl font-bold mb-4 text-gray-900">{t("ExpoGuide AI", "المرشد الذكي")}</h2>
             <p className="text-gray-500 max-w-md mb-8 text-lg">
@@ -260,28 +292,30 @@ export function Chat() {
             </p>
             <button 
               onClick={handleNewChat} 
+              disabled={isStartingConversation || createConv.isPending}
               className="btn-gradient-green px-8 py-3 rounded-full flex items-center gap-2 font-medium text-lg hover:shadow-[0_8px_25px_rgba(0,108,53,0.3)] transition-all transform hover:-translate-y-0.5"
             >
               <Plus className="w-5 h-5" />
               {t("Start Your Journey", "ابدأ رحلتك")}
             </button>
           </div>
+        ) : loadingConv ? (
+          <div className="flex-1 min-h-0 p-6 space-y-4 overflow-y-auto z-10">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className={cn("flex gap-3", i % 2 === 0 ? "justify-end" : "justify-start")}>
+                <Skeleton className="h-16 w-3/4 rounded-2xl" />
+              </div>
+            ))}
+          </div>
         ) : (
-          <>
-            <ScrollArea className="flex-1 p-4 md:p-6 z-10" ref={scrollRef}>
-              <div className="space-y-6 max-w-4xl mx-auto">
-                {loadingConv ? (
-                  Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className={cn("flex gap-3", i % 2 === 0 ? "justify-end" : "justify-start")}>
-                      <Skeleton className="h-16 w-3/4 rounded-2xl" />
-                    </div>
-                  ))
-                ) : allMessages.length === 0 && (
-                  <div className="text-center py-12 text-gray-400">
-                    {t("Send a message to start the conversation.", "أرسل رسالة لبدء المحادثة.")}
-                  </div>
-                )}
-                {!loadingConv && allMessages.map((msg, index) => (
+          <ScrollArea className="flex-1 min-h-0 p-4 md:p-6 z-10" ref={scrollRef}>
+            <div className="space-y-6 max-w-4xl mx-auto">
+              {allMessages.length === 0 && (
+                <div className="text-center py-12 text-gray-400">
+                  {t("Send a message to start the conversation.", "أرسل رسالة لبدء المحادثة.")}
+                </div>
+              )}
+              {allMessages.map((msg, index) => (
                   <motion.div
                     key={msg.id}
                     initial={{ opacity: 0, y: 10 }}
@@ -315,34 +349,34 @@ export function Chat() {
                       </div>
                     )}
                   </motion.div>
-                ))}
-              </div>
-            </ScrollArea>
-
-            {/* Input */}
-            <div className="p-4 bg-white/80 backdrop-blur-md border-t border-gray-100 z-10">
-              <div className="max-w-4xl mx-auto flex gap-3 relative">
-                <Input 
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder={t("Ask me anything about Expo 2030...", "اسألني أي شيء عن إكسبو 2030...")}
-                  className="flex-1 bg-white border-gray-200 rounded-full pl-5 pr-14 py-6 shadow-sm text-base focus-visible:ring-[#006C35] focus-visible:border-[#006C35]"
-                  disabled={isStreaming}
-                  aria-busy={isStreaming}
-                />
-                <button 
-                  onClick={handleSendMessage} 
-                  disabled={!message.trim() || isStreaming}
-                  className="absolute right-2 top-2 bottom-2 aspect-square rounded-full btn-gradient-green flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md transition-shadow"
-                  style={{ right: isRtl ? 'auto' : '0.5rem', left: isRtl ? '0.5rem' : 'auto' }}
-                >
-                  <Send className={cn("w-4 h-4", isRtl && "rotate-180")} />
-                </button>
-              </div>
+              ))}
             </div>
-          </>
+          </ScrollArea>
+
         )}
+
+        {/* Input is always available, including before a conversation exists. */}
+        <div className="p-4 bg-white/80 backdrop-blur-md border-t border-gray-100 z-10 shrink-0">
+          <div className="max-w-4xl mx-auto flex gap-3 relative">
+            <Input
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder={t("Ask me anything about Expo 2030...", "اسألني أي شيء عن إكسبو 2030...")}
+              className="flex-1 bg-white border-gray-200 rounded-full pl-5 pr-14 py-6 shadow-sm text-base focus-visible:ring-[#006C35] focus-visible:border-[#006C35]"
+              disabled={isStreaming || isStartingConversation}
+              aria-busy={isStreaming || isStartingConversation}
+            />
+            <button
+              onClick={handleSendMessage}
+              disabled={!message.trim() || isStreaming || isStartingConversation}
+              className="absolute right-2 top-2 bottom-2 aspect-square rounded-full btn-gradient-green flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md transition-shadow"
+              style={{ right: isRtl ? 'auto' : '0.5rem', left: isRtl ? '0.5rem' : 'auto' }}
+            >
+              <Send className={cn("w-4 h-4", isRtl && "rotate-180")} />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
