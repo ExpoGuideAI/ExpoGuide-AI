@@ -105,6 +105,12 @@ export function Chat() {
     );
   };
 
+  const handleSelectConversation = (id: number) => {
+    setActiveConvId(id);
+    setMessage("");
+    setStreamingMessage("");
+  };
+
   const handleSendMessage = async () => {
     if (!message.trim() || isStreaming || isStartingConversation || createConv.isPending) return;
 
@@ -112,7 +118,7 @@ export function Chat() {
     setMessage("");
     setStreamingMessage("");
     let conversationId = activeConvId;
-    let createdConversation = false;
+    const hadNoActiveConversation = !conversationId;
 
     try {
       // Allow sending directly from the empty state. Create the conversation
@@ -121,7 +127,6 @@ export function Chat() {
         setIsStartingConversation(true);
         const conv = await createConversation();
         conversationId = conv.id;
-        createdConversation = true;
       }
 
       setIsStreaming(true);
@@ -203,7 +208,7 @@ export function Chat() {
       setStreamingMessage("");
       abortControllerRef.current = null;
       setIsStartingConversation(false);
-      if (createdConversation && !conversationId) {
+      if (hadNoActiveConversation && !conversationId) {
         setMessage(userMessage);
       }
     }
@@ -260,7 +265,7 @@ export function Chat() {
                     ? "bg-[#006C35]/10 text-[#006C35] font-medium" 
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 )}
-                onClick={() => setActiveConvId(conv.id)}
+                onClick={() => handleSelectConversation(conv.id)}
               >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <MessageSquare className="w-4 h-4 shrink-0" />
@@ -308,7 +313,7 @@ export function Chat() {
             ))}
           </div>
         ) : (
-          <ScrollArea className="flex-1 min-h-0 p-4 md:p-6 z-10" ref={scrollRef}>
+          <ScrollArea className="flex-1 min-h-0 p-4 md:p-6 pb-28 z-10" ref={scrollRef}>
             <div className="space-y-6 max-w-4xl mx-auto">
               {allMessages.length === 0 && (
                 <div className="text-center py-12 text-gray-400">
@@ -356,7 +361,7 @@ export function Chat() {
         )}
 
         {/* Input is always available, including before a conversation exists. */}
-        <div className="p-4 bg-white/80 backdrop-blur-md border-t border-gray-100 z-10 shrink-0">
+        <div className="fixed bottom-16 md:bottom-0 left-0 right-0 md:left-80 p-4 bg-white/95 backdrop-blur-md border-t border-gray-100 z-30">
           <div className="max-w-4xl mx-auto flex gap-3 relative">
             <Input
               value={message}
