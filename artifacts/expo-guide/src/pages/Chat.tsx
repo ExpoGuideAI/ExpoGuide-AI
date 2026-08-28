@@ -16,10 +16,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Plus, Sparkles, Trash, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 export function Chat() {
   const { t, isRtl } = useI18n();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const [activeConvId, setActiveConvId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
@@ -33,7 +35,7 @@ export function Chat() {
   const { data: activeConv, isLoading: loadingConv } = useGetGeminiConversation(activeConvId!, {
     query: { 
       enabled: !!activeConvId,
-      queryKey: activeConvId ? getGetGeminiConversationQueryKey(activeConvId) : undefined
+      queryKey: getGetGeminiConversationQueryKey(activeConvId!)
     }
   });
   
@@ -46,25 +48,50 @@ export function Chat() {
     }
   }, [activeConv?.messages, streamingMessage]);
 
-  const handleNewChat = () => {
-    createConv.mutate(
-      { data: { title: t("New Conversation", "محادثة جديدة") } },
-      {
-        onSuccess: (conv) => {
-          queryClient.invalidateQueries({ queryKey: getListGeminiConversationsQueryKey() });
-          setActiveConvId(conv.id);
-        }
-      }
-    );
+  const handleNewChat = async () => {
+    if (createConv.isPending) return;
+
+    try {
+      // The conversation must exist in the database before it becomes active.
+      // mutateAsync also makes failures catchable instead of leaving the UI in
+      // a loading/unclickable state.
+      const conv = await createConv.mutateAsync({
+        data: { title: t("New Conversation", "محادثة جديدة") }
+      });
+
+      queryClient.invalidateQueries({ queryKey: getListGeminiConversationsQueryKey() });
+      queryClient.setQueryData(getGetGeminiConversationQueryKey(conv.id), {
+        ...conv,
+        messages: [],
+      });
+      setActiveConvId(conv.id);
+      setMessage("");
+      setStreamingMessage("");
+    } catch (error) {
+      console.error("Failed to create conversation:", error);
+      toast({
+        variant: "destructive",
+        title: t("Could not start chat", "تعذر بدء المحادثة"),
+        description: t("Please try again.", "يرجى المحاولة مرة أخرى."),
+      });
+    }
   };
 
   const handleDeleteChat = (id: number) => {
     deleteConv.mutate(
-      { data: { id } },
+      { id },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListGeminiConversationsQueryKey() });
           if (activeConvId === id) setActiveConvId(null);
+        },
+        onError: (error) => {
+          console.error("Failed to delete conversation:", error);
+          toast({
+            variant: "destructive",
+            title: t("Could not delete chat", "تعذر حذف المحادثة"),
+            description: t("Please try again.", "يرجى المحاولة مرة أخرى."),
+          });
         }
       }
     );
@@ -121,9 +148,7 @@ export function Chat() {
               }
               if (parsed.done) {
                 queryClient.invalidateQueries({ queryKey: getGetGeminiConversationQueryKey(activeConvId) });
-                setStreamingMessage("");
-                setIsStreaming(false);
-                return;
+                break;
               }
             } catch (e) {
               console.error("Failed to parse SSE chunk:", data);
@@ -136,9 +161,19 @@ export function Chat() {
         console.log("Stream aborted");
       } else {
         console.error("Stream error:", err);
+        queryClient.invalidateQueries({ queryKey: getGetGeminiConversationQueryKey(activeConvId) });
+        toast({
+          variant: "destructive",
+          title: t("Message failed", "تعذر إرسال الرسالة"),
+          description: t("Please try again.", "يرجى المحاولة مرة أخرى."),
+        });
       }
+    } finally {
+      // Always release the input, including when the stream closes without a
+      // final `done` event or the request fails.
       setIsStreaming(false);
       setStreamingMessage("");
+      abortControllerRef.current = null;
     }
   };
 
@@ -231,24 +266,22 @@ export function Chat() {
               {t("Start Your Journey", "ابدأ رحلتك")}
             </button>
           </div>
-        ) : loadingConv ? (
-          <div className="flex-1 p-6 space-y-4 z-10">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className={cn("flex gap-3", i % 2 === 0 ? "justify-end" : "justify-start")}>
-                <Skeleton className="h-16 w-3/4 rounded-2xl" />
-              </div>
-            ))}
-          </div>
         ) : (
           <>
             <ScrollArea className="flex-1 p-4 md:p-6 z-10" ref={scrollRef}>
               <div className="space-y-6 max-w-4xl mx-auto">
-                {allMessages.length === 0 && (
+                {loadingConv ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className={cn("flex gap-3", i % 2 === 0 ? "justify-end" : "justify-start")}>
+                      <Skeleton className="h-16 w-3/4 rounded-2xl" />
+                    </div>
+                  ))
+                ) : allMessages.length === 0 && (
                   <div className="text-center py-12 text-gray-400">
                     {t("Send a message to start the conversation.", "أرسل رسالة لبدء المحادثة.")}
                   </div>
                 )}
-                {allMessages.map((msg, index) => (
+                {!loadingConv && allMessages.map((msg, index) => (
                   <motion.div
                     key={msg.id}
                     initial={{ opacity: 0, y: 10 }}
@@ -296,6 +329,7 @@ export function Chat() {
                   placeholder={t("Ask me anything about Expo 2030...", "اسألني أي شيء عن إكسبو 2030...")}
                   className="flex-1 bg-white border-gray-200 rounded-full pl-5 pr-14 py-6 shadow-sm text-base focus-visible:ring-[#006C35] focus-visible:border-[#006C35]"
                   disabled={isStreaming}
+                  aria-busy={isStreaming}
                 />
                 <button 
                   onClick={handleSendMessage} 

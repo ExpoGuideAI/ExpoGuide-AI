@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useI18n } from "@/lib/i18n";
 import { motion } from "framer-motion";
-import { useGetQueueStatus } from "@workspace/api-client-react";
+import { useGetQueueStatus, getGetQueueStatusQueryKey } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Clock, TrendingUp, TrendingDown, Minus, RefreshCw, Users, Brain, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -164,7 +164,7 @@ export function Queue() {
   const { t, isRtl } = useI18n();
 
   const { data: queueStatus, isLoading, isRefetching } = useGetQueueStatus({
-    query: { refetchInterval: 30000 }
+    query: { queryKey: getGetQueueStatusQueryKey(), refetchInterval: 30000 }
   });
 
   const sortedQueue = useMemo(() => {
