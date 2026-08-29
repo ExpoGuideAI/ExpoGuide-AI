@@ -198,10 +198,23 @@ router.post("/gemini/conversations/:id/messages", async (req, res) => {
     .where(eq(messages.conversationId, conv.id))
     .orderBy(messages.createdAt);
 
-  // Set up SSE
+  const apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    const error = new Error(
+      "AI_INTEGRATIONS_GEMINI_API_KEY or GEMINI_API_KEY is not configured",
+    );
+    console.error("FULL GEMINI ERROR:", error);
+    res.status(500).json({ error: "Gemini API key is not configured" });
+    return;
+  }
+
+  // Set up SSE before making the request so headers are sent immediately and
+  // the client can reliably consume the response as a text stream.
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
 
   const chatMessages = [
     { role: "user" as const, parts: [{ text: SYSTEM_PROMPT }] },
@@ -215,7 +228,7 @@ router.post("/gemini/conversations/:id/messages", async (req, res) => {
 
   try {
     const stream = await ai.models.generateContentStream({
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash",
       contents: chatMessages,
       config: { maxOutputTokens: 8192 },
     });
@@ -238,6 +251,7 @@ router.post("/gemini/conversations/:id/messages", async (req, res) => {
     res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
     res.end();
   } catch (err) {
+    console.error("FULL GEMINI ERROR:", err);
     res.write(`data: ${JSON.stringify({ error: "AI error", done: true })}\n\n`);
     res.end();
   }

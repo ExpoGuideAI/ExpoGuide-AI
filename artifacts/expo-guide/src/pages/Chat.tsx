@@ -26,6 +26,7 @@ export function Chat() {
   const [activeConvId, setActiveConvId] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const [streamingMessage, setStreamingMessage] = useState("");
+  const [chatError, setChatError] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [isStartingConversation, setIsStartingConversation] = useState(false);
   
@@ -68,11 +69,13 @@ export function Chat() {
   const handleNewChat = async () => {
     if (createConv.isPending || isStartingConversation) return;
 
+    setChatError(null);
     try {
       setIsStartingConversation(true);
       await createConversation();
       setMessage("");
       setStreamingMessage("");
+      setChatError(null);
     } catch (error) {
       console.error("Failed to create conversation:", error);
       toast({
@@ -109,6 +112,7 @@ export function Chat() {
     setActiveConvId(id);
     setMessage("");
     setStreamingMessage("");
+    setChatError(null);
   };
 
   const handleSendMessage = async () => {
@@ -117,6 +121,7 @@ export function Chat() {
     const userMessage = message.trim();
     setMessage("");
     setStreamingMessage("");
+    setChatError(null);
     let conversationId = activeConvId;
     const hadNoActiveConversation = !conversationId;
 
@@ -151,7 +156,16 @@ export function Chat() {
         signal: abortControllerRef.current.signal,
       });
 
-      if (!response.ok) throw new Error("Failed to send message");
+      if (!response.ok) {
+        let serverMessage = "";
+        try {
+          const errorBody = await response.json();
+          serverMessage = typeof errorBody?.error === "string" ? errorBody.error : "";
+        } catch {
+          // The response may not be JSON (for example, a proxy error page).
+        }
+        throw new Error(serverMessage || `Request failed with status ${response.status}`);
+      }
 
       const reader = response.body?.getReader();
       if (!reader) throw new Error("No stream reader");
@@ -171,18 +185,23 @@ export function Chat() {
         for (const line of lines) {
           if (line.startsWith("data: ")) {
             const data = line.slice(6);
+            let parsed: any;
             try {
-              const parsed = JSON.parse(data);
-              if (parsed.content) {
-                fullResponse += parsed.content;
-                setStreamingMessage(fullResponse);
-              }
-              if (parsed.done) {
-                queryClient.invalidateQueries({ queryKey: getGetGeminiConversationQueryKey(conversationId) });
-                break;
-              }
+              parsed = JSON.parse(data);
             } catch (e) {
               console.error("Failed to parse SSE chunk:", data);
+              continue;
+            }
+            if (parsed.error) {
+              throw new Error(parsed.error);
+            }
+            if (parsed.content) {
+              fullResponse += parsed.content;
+              setStreamingMessage(fullResponse);
+            }
+            if (parsed.done) {
+              queryClient.invalidateQueries({ queryKey: getGetGeminiConversationQueryKey(conversationId) });
+              break;
             }
           }
         }
@@ -195,6 +214,12 @@ export function Chat() {
         if (conversationId) {
           queryClient.invalidateQueries({ queryKey: getGetGeminiConversationQueryKey(conversationId) });
         }
+        setChatError(
+          t(
+            "Sorry, I couldn't get an AI response. Please try again.",
+            "عذراً، تعذر الحصول على رد من الذكاء الاصطناعي. يرجى المحاولة مرة أخرى.",
+          ),
+        );
         toast({
           variant: "destructive",
           title: t("Message failed", "تعذر إرسال الرسالة"),
@@ -228,6 +253,15 @@ export function Chat() {
       conversationId: activeConvId!,
       role: "assistant",
       content: streamingMessage,
+      createdAt: new Date().toISOString()
+    });
+  }
+  if (chatError) {
+    allMessages.push({
+      id: -3,
+      conversationId: activeConvId!,
+      role: "assistant",
+      content: chatError,
       createdAt: new Date().toISOString()
     });
   }
@@ -295,6 +329,11 @@ export function Chat() {
             <p className="text-gray-500 max-w-md mb-8 text-lg">
               {t("Your intelligent companion at Riyadh Expo 2030. Ask me anything about pavilions, restaurants, events, or navigation.", "مرافقك الذكي في إكسبو الرياض 2030. اسألني عن أي شيء حول الأجنحة أو المطاعم أو الفعاليات أو التنقل.")}
             </p>
+            {chatError && (
+              <div className="mb-6 max-w-md rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {chatError}
+              </div>
+            )}
             <button 
               onClick={handleNewChat} 
               disabled={isStartingConversation || createConv.isPending}

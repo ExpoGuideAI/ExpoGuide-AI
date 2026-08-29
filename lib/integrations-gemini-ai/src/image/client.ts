@@ -6,10 +6,13 @@ if (!process.env.AI_INTEGRATIONS_GEMINI_BASE_URL) {
   );
 }
 
-const apiKey =
-  process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+const apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 
 if (!apiKey) {
+  console.error(
+    "Gemini API Error:",
+    new Error("AI_INTEGRATIONS_GEMINI_API_KEY or GEMINI_API_KEY must be set"),
+  );
   throw new Error(
     "AI_INTEGRATIONS_GEMINI_API_KEY or GEMINI_API_KEY must be set. Did you forget to configure Gemini?",
   );
