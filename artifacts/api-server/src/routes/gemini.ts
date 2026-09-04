@@ -198,11 +198,13 @@ router.post("/gemini/conversations/:id/messages", async (req, res) => {
     .where(eq(messages.conversationId, conv.id))
     .orderBy(messages.createdAt);
 
-  const apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+  const apiKey =
+    process.env.GEMINI_API_KEY ||
+    process.env.AI_INTEGRATIONS_GEMINI_API_KEY;
 
   if (!apiKey) {
     const error = new Error(
-      "AI_INTEGRATIONS_GEMINI_API_KEY or GEMINI_API_KEY is not configured",
+      "GEMINI_API_KEY or AI_INTEGRATIONS_GEMINI_API_KEY is not configured",
     );
     console.error("FULL GEMINI ERROR:", error);
     res.status(500).json({ error: "Gemini API key is not configured" });
