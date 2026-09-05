@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useI18n } from "@/lib/i18n";
 import { motion } from "framer-motion";
 import { 
@@ -383,8 +385,20 @@ export function Chat() {
                           : "bg-white border-l-4 border-l-[#006C35] text-gray-800 rounded-bl-sm"
                       )}
                     >
-                      <div className="prose prose-sm max-w-none">
-                        {msg.content}
+                      <div
+                        className={cn(
+                          "max-w-none text-start",
+                          msg.role === "assistant" &&
+                            "[&_p]:my-3 first:[&_p]:mt-0 last:[&_p]:mb-0 [&_strong]:font-bold [&_ul]:my-3 [&_ul]:list-disc [&_ul]:ps-6 [&_ol]:my-3 [&_ol]:list-decimal [&_ol]:ps-6 [&_li]:my-1.5 [&_li>p]:my-0 [&_a]:underline [&_a]:underline-offset-2",
+                        )}
+                      >
+                        {msg.role === "assistant" ? (
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {msg.content}
+                          </ReactMarkdown>
+                        ) : (
+                          msg.content
+                        )}
                       </div>
                     </div>
                     {msg.role === "user" && (

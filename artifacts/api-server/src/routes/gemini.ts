@@ -218,13 +218,10 @@ router.post("/gemini/conversations/:id/messages", async (req, res) => {
   res.setHeader("Connection", "keep-alive");
   res.flushHeaders();
 
-  const chatMessages = [
-    { role: "user" as const, parts: [{ text: SYSTEM_PROMPT }] },
-    ...history.map((m) => ({
+  const chatMessages = history.map((m) => ({
       role: (m.role === "assistant" ? "model" : "user") as "user" | "model",
       parts: [{ text: m.content }],
-    })),
-  ];
+    }));
 
   let fullResponse = "";
 
@@ -232,7 +229,12 @@ router.post("/gemini/conversations/:id/messages", async (req, res) => {
     const stream = await ai.models.generateContentStream({
       model: "gemini-3.6-flash",
       contents: chatMessages,
-      config: { maxOutputTokens: 8192 },
+      config: {
+        maxOutputTokens: 8192,
+        systemInstruction: `${SYSTEM_PROMPT}
+
+You are ExpoGuide AI, a helpful event guide assistant. Always format responses cleanly using Markdown with distinct line breaks between lists, bold section titles, and itemized bullet points.`,
+      },
     });
 
     for await (const chunk of stream) {
