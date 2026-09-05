@@ -1,10 +1,11 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 
-delete process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
-
 const apiKey =
   process.env.GEMINI_API_KEY ||
   process.env.AI_INTEGRATIONS_GEMINI_API_KEY;
+
+delete process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
+delete process.env.GOOGLE_API_KEY;
 
 export const ai = new GoogleGenAI({
   apiKey,

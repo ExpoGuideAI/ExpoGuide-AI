@@ -230,7 +230,7 @@ router.post("/gemini/conversations/:id/messages", async (req, res) => {
 
   try {
     const stream = await ai.models.generateContentStream({
-      model: "gemini-1.5-flash",
+      model: "gemini-3.6-flash",
       contents: chatMessages,
       config: { maxOutputTokens: 8192 },
     });
@@ -253,7 +253,11 @@ router.post("/gemini/conversations/:id/messages", async (req, res) => {
     res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
     res.end();
   } catch (err) {
-    console.error("FULL GEMINI ERROR:", err);
+    console.error("FULL GEMINI ERROR:", {
+      error: err,
+      message: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
     res.write(`data: ${JSON.stringify({ error: "AI error", done: true })}\n\n`);
     res.end();
   }
