@@ -10,28 +10,21 @@ import { Scene1 } from './video_scenes/Scene1';
 import { Scene2 } from './video_scenes/Scene2';
 import { Scene3 } from './video_scenes/Scene3';
 import { Scene4 } from './video_scenes/Scene4';
-import { Scene5 } from './video_scenes/Scene5';
-import { Scene6 } from './video_scenes/Scene6';
-import { asset } from './video_scenes/ScenePrimitives';
 
 export const SCENE_DURATIONS = {
-  intro: 5200,
-  assistant: 5800,
-  discover: 5600,
-  dining: 5100,
-  route: 5200,
-  close: 6000,
+  scene1: 8000,
+  scene2: 14000,
+  scene3: 8000,
+  scene4: 10000,
 };
 
 const VIDEO_ASPECT_RATIO: VideoAspectRatio = '16:9';
 
 const SCENE_COMPONENTS: Record<string, ComponentType> = {
-  intro: Scene1,
-  assistant: Scene2,
-  discover: Scene3,
-  dining: Scene4,
-  route: Scene5,
-  close: Scene6,
+  scene1: Scene1,
+  scene2: Scene2,
+  scene3: Scene3,
+  scene4: Scene4,
 };
 
 const SCENE_START_SEC: Record<string, number> = (() => {
@@ -95,54 +88,59 @@ export default function VideoTemplate({
       <VideoCanvas
         aspectRatio={VIDEO_ASPECT_RATIO}
         className="video-root"
-        style={{ backgroundColor: 'var(--color-bg-light)' }}
+        style={{ backgroundColor: 'var(--color-bg-main)' }}
       >
         <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+          {/* Drifting Pastel Shapes */}
           <motion.div
-            className="absolute -left-[12vw] -top-[18vw] h-[52vw] w-[52vw] rounded-full bg-[#0d5c46]/30 blur-[6vw]"
+            className="absolute top-[-10vw] left-[-10vw] h-[50vw] w-[50vw] rounded-full bg-[var(--color-blue)] opacity-50 blur-[8vw]"
             animate={{
-              x: sceneIndex % 2 === 0 ? '0vw' : '12vw',
-              y: sceneIndex > 2 ? '13vw' : '0vw',
-              scale: sceneIndex === 5 ? 1.25 : 1,
+              x: sceneIndex % 2 === 0 ? '5vw' : '15vw',
+              y: sceneIndex > 1 ? '10vw' : '0vw',
+              scale: sceneIndex === 3 ? 1.2 : 1,
             }}
-            transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 3, ease: 'easeInOut' }}
           />
           <motion.div
-            className="absolute -bottom-[20vw] right-[0vw] h-[55vw] w-[55vw] rounded-full bg-[#d9b45c]/10 blur-[7vw]"
+            className="absolute bottom-[-15vw] right-[-5vw] h-[60vw] w-[60vw] rounded-full bg-[var(--color-mint)] opacity-50 blur-[9vw]"
             animate={{
-              x: sceneIndex % 2 === 0 ? '0vw' : '-8vw',
-              y: sceneIndex === 4 ? '-15vw' : '0vw',
-              scale: sceneIndex === 3 ? 1.22 : 1,
+              x: sceneIndex % 2 === 0 ? '0vw' : '-10vw',
+              y: sceneIndex === 2 ? '-15vw' : '0vw',
+              scale: sceneIndex === 1 ? 1.1 : 1,
             }}
-            transition={{ duration: 1.55, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 3.5, ease: 'easeInOut' }}
           />
-          <motion.img
-            src={asset('riyadh-night-grid.png')}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover opacity-[.06] mix-blend-screen"
+          <motion.div
+            className="absolute top-[30vw] left-[40vw] h-[40vw] w-[40vw] rounded-full bg-[var(--color-coral)] opacity-40 blur-[7vw]"
             animate={{
-              scale: [1.02, 1.06, 1.02],
-              x: ['0vw', '-1vw', '0vw'],
+              x: sceneIndex === 0 ? '0vw' : '10vw',
+              y: sceneIndex === 3 ? '-20vw' : '10vw',
+              scale: sceneIndex % 2 === 0 ? 1 : 1.3,
             }}
-            transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+            transition={{ duration: 4, ease: 'easeInOut' }}
           />
         </div>
+        
+        {/* Persistent Brand Watermark */}
         <motion.div
-          className="pointer-events-none absolute right-[5vw] top-[4vw] z-30 flex items-center gap-[.75vw]"
+          className="pointer-events-none absolute top-[3vw] left-[4vw] z-30 flex items-center gap-[1vw]"
           animate={{
-            opacity: sceneIndex === 5 ? 0.9 : 0.56,
-            x: sceneIndex === 0 ? 0 : 2,
+            opacity: sceneIndex === 3 ? 0 : 0.8,
+            y: sceneIndex === 0 ? 0 : '1vw'
           }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.8 }}
         >
-          <span className="mono text-[.58vw] uppercase tracking-[.18em] text-[var(--color-text-secondary)]">
-            EXPOGUIDE AI
-          </span>
-          <span className="h-[.42vw] w-[.42vw] rounded-full bg-[var(--color-accent)]" />
+          <img 
+            src={`${import.meta.env.BASE_URL}assets/expo2030-logo.png`} 
+            alt="Expo 2030" 
+            className="h-[3.5vw] object-contain" 
+          />
         </motion.div>
+
         <AnimatePresence mode="sync" initial={false}>
           {SceneComponent && <SceneComponent key={currentSceneKey} />}
         </AnimatePresence>
+
         <audio
           ref={audioRef}
           src={`${import.meta.env.BASE_URL}audio/bg_music.mp3`}

@@ -1,47 +1,83 @@
 import { motion } from 'framer-motion';
-import { KineticText, MiniPill, Signal } from './ScenePrimitives';
 
 export function Scene4() {
   return (
-    <motion.section
-      className="scene-layer"
-      initial={{ clipPath: 'inset(0 0 100% 0)' }}
-      animate={{ clipPath: 'inset(0 0 0% 0)' }}
-      exit={{ clipPath: 'inset(100% 0 0 0)' }}
-      transition={{ duration: .85, ease: [0.16, 1, 0.3, 1] }}
+    <motion.div 
+      className="scene-layer flex items-center justify-center relative p-[6vw] bg-[var(--color-bg-main)]"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="absolute inset-0 bg-[#092620]" />
-      <div className="absolute -left-[10vw] top-[18vw] h-[28vw] w-[28vw] rounded-full bg-[#b76747]/20 blur-[4vw]" />
-      <div className="absolute right-[3vw] -top-[9vw] h-[33vw] w-[33vw] rounded-full bg-[#d9b45c]/14 blur-[5vw]" />
-      <Signal left="11%" top="26%" /><Signal left="88%" top="72%" delay={1} />
-      <div className="relative z-10 flex h-full flex-col justify-center px-[10vw]">
-        <div className="flex items-end justify-between">
-          <div className="w-[37vw]">
-            <KineticText delay={.1}>
-              <div className="eyebrow mb-[1vw] text-[.72vw] text-[var(--color-accent)]">03 / Make time for wonder</div>
-              <h2 className="display text-[4.45vw] font-semibold leading-[.95] tracking-[-.07em]">Eat well.<br /><span className="text-[var(--color-coral)]">Wait less.</span></h2>
-            </KineticText>
-            <KineticText delay={.42} className="mt-[1.7vw] max-w-[30vw]">
-              <p className="text-[1.04vw] leading-[1.45] text-[var(--color-text-secondary)]">Know what’s open, what’s worth the walk, and whether the queue is moving before you move.</p>
-            </KineticText>
+      <div className="flex w-full max-w-[85vw] h-full items-center justify-between z-10 gap-[5vw]">
+        
+        {/* Left Side: URL & Headline */}
+        <motion.div 
+          className="flex-1 flex flex-col justify-center gap-[3vw]"
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+        >
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 1, delay: 0.8, type: "spring" }}
+          >
+            <img 
+              src={`${import.meta.env.BASE_URL}assets/expo2030-logo.png`} 
+              alt="Expo 2030" 
+              className="h-[8vw] object-contain mb-[2vw]" 
+            />
+          </motion.div>
+
+          <h2 className="display text-[5vw] font-extrabold text-[var(--color-text-dark)] leading-tight">
+            Scan to Try <br/>
+            <span className="text-[var(--color-primary)]">ExpoGuide AI Live</span>
+          </h2>
+          
+          <motion.div 
+            className="inline-flex bg-white px-[2.5vw] py-[1.5vw] rounded-2xl shadow-xl border-l-[10px] border-[var(--color-primary)] w-fit"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.5, type: "spring" }}
+          >
+            <span className="font-mono text-[1.8vw] font-bold text-[var(--color-text-dark)]">
+              expoguide-ai.replit.app
+            </span>
+          </motion.div>
+        </motion.div>
+
+        {/* Right Side: QR Code */}
+        <motion.div 
+          className="w-[35vw] flex items-center justify-center relative"
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 1, delay: 1, ease: "easeOut" }}
+        >
+          {/* Glowing Border Background */}
+          <motion.div 
+            className="absolute inset-0 bg-[var(--color-primary)] rounded-[3vw] opacity-30 blur-[2vw]"
+            animate={{ 
+              scale: [1, 1.05, 1],
+              opacity: [0.3, 0.5, 0.3]
+            }}
+            transition={{ 
+              duration: 3, 
+              repeat: Infinity, 
+              ease: "easeInOut" 
+            }}
+          />
+          
+          <div className="bg-white p-[3vw] rounded-[3vw] shadow-2xl relative z-10 border-[6px] border-[var(--color-primary)]">
+            <img 
+              src={`${import.meta.env.BASE_URL}assets/expo-guide-qr.png`}
+              alt="ExpoGuide AI QR Code"
+              className="w-full h-auto object-contain rounded-[1vw]"
+            />
           </div>
-          <MiniPill tone="green">live now</MiniPill>
-        </div>
-        <div className="mt-[3vw] flex gap-[1.2vw]">
-          {[
-            { title: 'Saudi Table', sub: 'Najdi · 6 min', status: 'Open', accent: '#d9b45c', width: '24vw' },
-            { title: 'Future Food Hall', sub: 'Global · 14 min', status: 'Busy', accent: '#e78159', width: '28vw' },
-            { title: 'Japan Pavilion', sub: 'Queue · 08 min', status: 'Moving', accent: '#78c7a2', width: '20vw' },
-          ].map((card, index) => (
-            <motion.div key={card.title} className="glass rounded-[1.25vw] p-[1.25vw]" style={{ width: card.width }} initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .6 + index * .15, duration: .65, ease: [0.16, 1, 0.3, 1] }}>
-              <div className="mb-[1.4vw] flex items-center justify-between"><span className="h-[2.15vw] w-[2.15vw] rounded-[.65vw]" style={{ background: `${card.accent}28` }} /><span className="mono text-[.6vw] uppercase tracking-[.12em]" style={{ color: card.accent }}>{card.status}</span></div>
-              <h3 className="display text-[1.35vw] font-semibold">{card.title}</h3>
-              <div className="mt-[.55vw] flex items-center justify-between"><span className="text-[.7vw] text-[var(--color-text-muted)]">{card.sub}</span><span className="text-[.8vw]" style={{ color: card.accent }}>↗</span></div>
-              <div className="mt-[1.1vw] h-[.22vw] w-full overflow-hidden rounded-full bg-[#254b40]"><motion.div className="h-full rounded-full" style={{ background: card.accent }} initial={{ width: 0 }} animate={{ width: `${42 + index * 18}%` }} transition={{ delay: 1.1 + index * .16, duration: .7 }} /></div>
-            </motion.div>
-          ))}
-        </div>
+        </motion.div>
+
       </div>
-    </motion.section>
+    </motion.div>
   );
 }
