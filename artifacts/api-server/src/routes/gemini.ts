@@ -214,8 +214,9 @@ router.post("/gemini/conversations/:id/messages", async (req, res) => {
   // Set up SSE before making the request so headers are sent immediately and
   // the client can reliably consume the response as a text stream.
   res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
   res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
   res.flushHeaders();
 
   const chatMessages = history.map((m) => ({
