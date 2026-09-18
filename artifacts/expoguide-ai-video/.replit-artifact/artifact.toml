@@ -1,0 +1,29 @@
+kind = "video"
+videoAspectRatio = "16:9"
+previewPath = "/expoguide-ai-video/"
+title = "ExpoGuide AI Promo Video"
+description = "A short animated 16:9 product video showcasing ExpoGuide AI for Riyadh Expo 2030, including bilingual guidance, pavilion discovery, dining, live queues, and a QR code for the live app."
+version = "1.0.0"
+id = "artifacts/expoguide-ai-video"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/expoguide-ai-video/" ]
+localPort = 24584
+
+[services.development]
+run = "pnpm --filter @workspace/expoguide-ai-video run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/expoguide-ai-video", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/expoguide-ai-video/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24584"
+BASE_PATH = "/expoguide-ai-video/"

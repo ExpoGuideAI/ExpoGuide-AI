@@ -1,0 +1,9 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "e9LpWqBaH7nOBwiIbmaj_"
+uri = "file://artifacts/expoguide-ai-video/public/audio/bg_music.mp3"
+type = "audio"
+title = "ExpoGuide background music"
+description = "Generated music: Cinematic uplifting electronic instrumental background music scoring a bilingual future-facing Riyadh Expo 2030 product video. Warm synth pulses, subtle Middle Eastern-inspired percu…"
