@@ -1,0 +1,38 @@
+Create a high-energy 40-second 3D product demo animation for "Expo Guide" featuring a floating device mockup showcase.
+
+Visual Theme & Styling:
+- Background: Off-white canvas (#F8FAFC) with soft organic pastel shapes (#E0F2FE sky blue, #DCFCE7 mint green, #FFE4E6 coral) and ambient lighting gradients.
+- Colors: Deep Forest Green (#0B5D3B) for primary headers/buttons, Slate Dark (#0F172A) for readable text.
+- Device Styling: Sleek floating 3D smartphone/laptop device frame angled in dynamic perspective with soft drop shadows and subtle motion floating animations.
+
+Scene Breakdown (3D Perspective Showcase):
+
+Scene 1 (0:00 - 0:08) - The Hook & Dynamic Entrance
+- Setup: 3D floating smartphone frame tilted at a dynamic 30-degree perspective angle.
+- Top Pill Overlay: "Your AI Companion"
+- Dynamic Headline: "Welcome to EXPO 2030"
+- Device Action: The phone screen displays an interactive chat box typing: "Fastest way to visit AI Startups?" followed by an instant response card popping up: "Hall 3 • Low Queue (5 min wait)".
+
+Scene 2 (0:08 - 0:22) - Animated Screen Scroll & Tab Walkthrough
+- Setup: Camera smoothly pans and rotates across a floating web/mobile dashboard container displaying live interactive tabs:
+  1. "AI Guide" Tab: Shows instant multilingual chat streaming on the device screen.
+  2. "Live Queue" Tab: Animated crowd density status on the app UI shifting from High (Red) to Recommended (Green).
+  3. "Pavilions & Dining" Tab: A clean schedule card generates an optimized itinerary in real time.
+- On-Screen Text Overlay: Bold side-text badges ("Instant AI Guidance", "Live Queues", "Smart Schedules") popping in beat-synced with screen transitions.
+
+Scene 3 (0:22 - 0:30) - Multi-Card Feature Grid
+- Setup: Device tilts into a flat front-facing position while 3 side-by-side soft pastel cards fade in around the screen:
+  * Headline Above: "The Era of Change — Together for a Foresighted Tomorrow"
+  * Sky Blue Card: "Zero Wait Times"
+  * Mint Green Card: "Instant Gemini Guidance"
+  * Soft Coral Card: "Personalized Navigation"
+
+Scene 4 (0:30 - 0:40) - Scan & Call to Action End Frame
+- Setup: Device smoothly transitions to the right side of the screen.
+- Left Side: Large headline "Scan to Try ExpoGuide AI Live" along with the web URL link.
+- Right Side: Prominent green-bordered QR code card with an animated glowing pulsing ring overlay.
+
+Technical & UI Rules:
+- Include timeline play/pause video controls at the bottom of the container.
+- Use sharp, high-contrast text on all pastel UI cards.
+- Ensure all transitions between 3D camera angles and scenes feel fast-paced, smooth, and modern.
