@@ -9,6 +9,7 @@ import { Pavilions } from './pages/Pavilions';
 import { Restaurants } from './pages/Restaurants';
 import { Queue } from './pages/Queue';
 import { Chat } from './pages/Chat';
+import { SmartRoute } from './components/SmartRoute';
 import { NotFound } from './pages/not-found';
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ function Router() {
         <Route path="/restaurants" component={Restaurants} />
         <Route path="/queue" component={Queue} />
         <Route path="/chat" component={Chat} />
+        <Route path="/smart-route" component={SmartRoute} />
         <Route component={NotFound} />
       </Switch>
     </Shell>

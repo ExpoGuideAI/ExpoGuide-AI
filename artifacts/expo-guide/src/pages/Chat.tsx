@@ -19,14 +19,19 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Plus, Sparkles, Trash, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { chatSessionStore } from "@/lib/chatSessionStore";
 
 export function Chat() {
   const { t, isRtl } = useI18n();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const [activeConvId, setActiveConvId] = useState<number | null>(null);
-  const [message, setMessage] = useState("");
+  const [activeConvId, setActiveConvIdState] = useState<number | null>(
+    () => chatSessionStore.getState().activeConvId,
+  );
+  const [message, setMessageState] = useState(
+    () => chatSessionStore.getState().draftMessage,
+  );
   const [streamingMessage, setStreamingMessage] = useState("");
   const [chatError, setChatError] = useState<string | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -34,6 +39,16 @@ export function Chat() {
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  const setActiveConvId = (id: number | null) => {
+    chatSessionStore.setActiveConversation(id);
+    setActiveConvIdState(id);
+  };
+
+  const setMessage = (value: string) => {
+    chatSessionStore.setDraftMessage(value);
+    setMessageState(value);
+  };
 
   const { data: conversations, isLoading: loadingConvs } = useListGeminiConversations();
   const { data: activeConv, isLoading: loadingConv } = useGetGeminiConversation(activeConvId!, {

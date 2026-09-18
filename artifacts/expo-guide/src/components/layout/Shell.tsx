@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import { Globe, Map, Utensils, Clock, MessageSquare, Menu, X } from "lucide-react";
+import { Globe, Map, Utensils, Clock, MessageSquare, Route as RouteIcon, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { AnimatedBackground } from "../ui/animated-background";
 
@@ -19,6 +19,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     { href: "/restaurants", icon: Utensils, label: t("Dining", "المطاعم") },
     { href: "/queue", icon: Clock, label: t("Live Queue", "الطوابير المباشرة") },
     { href: "/chat", icon: MessageSquare, label: t("AI Guide", "المرشد الذكي") },
+    { href: "/smart-route", icon: RouteIcon, label: t("Smart Route", "المسار الذكي") },
   ];
 
   return (
