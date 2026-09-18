@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Route, Switch, Router as WouterRouter } from 'wouter';
+import { useRef } from 'react';
+import { Route, Switch, Router as WouterRouter, useLocation } from 'wouter';
 import { I18nProvider } from './lib/i18n';
 import { Shell } from './components/layout/Shell';
 
@@ -15,17 +16,34 @@ import { NotFound } from './pages/not-found';
 const queryClient = new QueryClient();
 
 function Router() {
+  const [location] = useLocation();
+  const chatWasOpened = useRef(location === '/chat');
+
+  if (location === '/chat') {
+    chatWasOpened.current = true;
+  }
+
   return (
     <Shell>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/pavilions" component={Pavilions} />
-        <Route path="/restaurants" component={Restaurants} />
-        <Route path="/queue" component={Queue} />
-        <Route path="/chat" component={Chat} />
-        <Route path="/smart-route" component={SmartRoute} />
-        <Route component={NotFound} />
-      </Switch>
+      {chatWasOpened.current && (
+        <div
+          className={location === '/chat' ? 'flex min-h-0 flex-1' : 'hidden'}
+          aria-hidden={location !== '/chat'}
+        >
+          <Chat />
+        </div>
+      )}
+
+      {location !== '/chat' && (
+        <Switch>
+          <Route path="/" component={Home} />
+          <Route path="/pavilions" component={Pavilions} />
+          <Route path="/restaurants" component={Restaurants} />
+          <Route path="/queue" component={Queue} />
+          <Route path="/smart-route" component={SmartRoute} />
+          <Route component={NotFound} />
+        </Switch>
+      )}
     </Shell>
   );
 }
