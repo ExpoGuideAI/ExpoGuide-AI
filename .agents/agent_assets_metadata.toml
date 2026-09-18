@@ -7,3 +7,18 @@ uri = "file://artifacts/expoguide-ai-video/public/audio/bg_music.mp3"
 type = "audio"
 title = "ExpoGuide background music"
 description = "Generated music: Cinematic uplifting electronic instrumental background music scoring a bilingual future-facing Riyadh Expo 2030 product video. Warm synth pulses, subtle Middle Eastern-inspired percu…"
+logical_id = "a4a51e44-93ad-4fbb-bd0a-ac7c1a94282c"
+
+[[outputs]]
+id = "NcSvp9oMnif3-Zj_citoT"
+uri = "file://artifacts/expoguide-ai-video/public/demo-video.mp4"
+type = "video"
+title = "ExpoGuide AI Demo Video"
+description = "40-second 1280×720 MP4 export of the ExpoGuide AI demo video."
+logical_id = "953d8083-5972-4181-9b9d-69160679958c"
+content_hash = "sha256:af8ba77697cc98002661e44620626a653c88f259db9304e348ab8b1fe2fc11e9"
+size = 8283358
+mtime_ms = 1789759969323
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:a5f7f774-3570-4e05-9060-c73714509dda/953d8083-5972-4181-9b9d-69160679958c/2367b676-bd63-45dc-a830-79ce1f26c6b0"
+storage_version_token = "1789759977281785"
+content_type = "video/mp4"
