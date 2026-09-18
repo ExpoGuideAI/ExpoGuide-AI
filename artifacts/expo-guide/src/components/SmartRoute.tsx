@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
+  Bath,
+  Building2,
   Check,
   Clock3,
   Footprints,
@@ -13,6 +15,8 @@ import {
   Search,
   ShieldCheck,
   Sparkles,
+  Utensils,
+  Info,
   X,
   Zap,
 } from "lucide-react";
@@ -43,6 +47,12 @@ const locations: ExpoLocation[] = [
 
 const startOptions = locations.slice(0, 4);
 const quickSuggestionIds = ["saudi", "japan", "dining"];
+const mapHubs = [
+  { id: "hub-pavilions", type: "pavilion", label: "Pavilion Hub", labelAr: "مركز الأجنحة", status: "Queue: 5 mins", statusAr: "الطابور: 5 دقائق", point: [275, 268] as [number, number] },
+  { id: "hub-dining", type: "dining", label: "Dining Hall B", labelAr: "قاعة المطاعم ب", status: "Seats available", statusAr: "مقاعد متاحة", point: [516, 152] as [number, number] },
+  { id: "hub-restroom", type: "restroom", label: "Restrooms", labelAr: "دورات المياه", status: "Open · No wait", statusAr: "مفتوح · بدون انتظار", point: [365, 282] as [number, number] },
+  { id: "hub-info", type: "info", label: "Info Desk", labelAr: "مكتب المعلومات", status: "Fast Track Available", statusAr: "المسار السريع متاح", point: [168, 96] as [number, number] },
+] as const;
 
 function calculateRoute(route: ExpoLocation[]) {
   let totalDistance = 0;
@@ -82,6 +92,7 @@ export function SmartRoute() {
   const [locationDetected, setLocationDetected] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [customLocations, setCustomLocations] = useState<ExpoLocation[]>([]);
+  const [activeHubId, setActiveHubId] = useState<string | null>(null);
 
   const allLocations = useMemo(() => [...locations, ...customLocations], [customLocations]);
 
@@ -97,6 +108,15 @@ export function SmartRoute() {
   const pathData = routeStops
     .map((stop, index) => `${index === 0 ? "M" : "L"} ${stop.point[0]} ${stop.point[1]}`)
     .join(" ");
+  const nextStopIndex = Math.min(selectedStop + 1, routeStops.length - 1);
+  const nextStop = routeStops[nextStopIndex];
+  const guidanceDistance = Math.max(
+    0,
+    routeData.cumulativeDistances[nextStopIndex] - routeData.cumulativeDistances[selectedStop],
+  );
+  const concourseName = selectedStop % 2 === 0
+    ? t("North Concourse", "الممر الشمالي")
+    : t("Central Promenade", "الممشى المركزي");
 
   const filteredLocations = useMemo(() => {
     const query = searchTerm.trim().toLocaleLowerCase();
@@ -408,37 +428,172 @@ export function SmartRoute() {
             <span className="hidden items-center gap-1.5 rounded-full bg-[#006C35]/10 px-3 py-1.5 text-xs font-bold text-[#006C35] sm:inline-flex"><Zap className="h-3.5 w-3.5" />{t(`${routeData.savings} min saved`, `وفر ${routeData.savings} دقيقة`)}</span>
           </div>
 
-          <div className="relative min-h-[360px] overflow-hidden rounded-[24px] border border-[#006C35]/10 bg-[#f4faf6]">
-            <div className="absolute inset-0 opacity-50 [background-image:linear-gradient(#d9ecdf_1px,transparent_1px),linear-gradient(90deg,#d9ecdf_1px,transparent_1px)] [background-size:34px_34px]" />
-            <div className="absolute -left-16 top-10 h-44 w-44 rounded-full bg-[#4FB480]/20 blur-3xl" />
-            <div className="absolute -right-10 bottom-2 h-48 w-48 rounded-full bg-[#08B0A0]/10 blur-3xl" />
-            <svg viewBox="0 0 600 360" className="absolute inset-0 h-full w-full" role="img" aria-label={t("Generated Expo walking route", "مسار المشي المُنشأ في إكسبو")}>
-              <path d={pathData} fill="none" stroke="#d5e7da" strokeWidth="24" strokeLinejoin="round" strokeLinecap="round" />
-              <motion.path key={generatedPlan.version} d={pathData} fill="none" stroke="#006C35" strokeWidth="7" strokeLinejoin="round" strokeLinecap="round" strokeDasharray="12 9" initial={{ pathLength: 0, strokeDashoffset: 120 }} animate={{ pathLength: 1, strokeDashoffset: 0 }} transition={{ pathLength: { duration: 0.8 }, strokeDashoffset: { duration: 5, repeat: Infinity, ease: "linear" } }} />
+          <div className="relative min-h-[430px] overflow-hidden rounded-[24px] border border-[#006C35]/15 bg-[#edf4ec] shadow-inner">
+            <svg viewBox="0 0 600 360" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full" role="img" aria-label={t("Interactive Expo venue masterplan", "المخطط التفاعلي لموقع إكسبو")}>
+              <defs>
+                <linearGradient id="venueGround" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#f7f2e6" />
+                  <stop offset="52%" stopColor="#eef5e9" />
+                  <stop offset="100%" stopColor="#e3f1e8" />
+                </linearGradient>
+                <filter id="mapShadow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#244b35" floodOpacity="0.15" />
+                </filter>
+              </defs>
+
+              <rect width="600" height="360" fill="url(#venueGround)" />
+              <path d="M -20 325 C 95 278, 168 330, 270 290 S 450 276, 635 322 L 635 380 L -20 380 Z" fill="#b9ddd6" opacity="0.72" />
+              <path d="M -10 52 C 100 18, 175 43, 256 25 S 430 8, 615 48" fill="none" stroke="#d7e8cf" strokeWidth="34" opacity="0.8" />
+
+              <g opacity="0.95">
+                <path d="M 28 225 L 530 220" fill="none" stroke="#fffdf7" strokeWidth="32" strokeLinecap="round" />
+                <path d="M 58 298 L 135 264 L 220 145 L 342 86 L 500 220 L 430 295" fill="none" stroke="#fffdf7" strokeWidth="26" strokeLinejoin="round" strokeLinecap="round" />
+                <path d="M 94 110 L 220 145 L 275 268 L 365 282" fill="none" stroke="#fffdf7" strokeWidth="22" strokeLinejoin="round" strokeLinecap="round" />
+                <path d="M 342 86 L 516 152 L 500 220" fill="none" stroke="#fffdf7" strokeWidth="20" strokeLinejoin="round" strokeLinecap="round" />
+              </g>
+              <g fill="none" stroke="#c8d7c5" strokeWidth="1.5" strokeDasharray="4 7" opacity="0.9">
+                <path d="M 28 225 L 530 220" fill="none" />
+                <path d="M 58 298 L 135 264 L 220 145 L 342 86 L 500 220 L 430 295" fill="none" />
+                <path d="M 94 110 L 220 145 L 275 268 L 365 282" fill="none" />
+              </g>
+
+              <g filter="url(#mapShadow)">
+                <path d="M 20 72 L 122 54 L 150 132 L 42 150 Z" fill="#dce9cf" stroke="#b9cfaa" />
+                <path d="M 178 74 L 298 48 L 319 125 L 199 145 Z" fill="#d8eee3" stroke="#acd2bd" />
+                <path d="M 365 34 L 540 62 L 526 137 L 357 112 Z" fill="#e6dfc8" stroke="#d2c59d" />
+                <path d="M 245 230 L 392 218 L 410 323 L 238 331 Z" fill="#dcead8" stroke="#b7cfb0" />
+                <path d="M 445 242 L 565 225 L 578 316 L 452 330 Z" fill="#e9dfd2" stroke="#d2bfa9" />
+              </g>
+
+              <g fill="#f9fbf6" stroke="#9fbea7" strokeWidth="1">
+                <rect x="42" y="86" width="36" height="24" rx="6" />
+                <rect x="88" y="75" width="39" height="28" rx="7" />
+                <rect x="189" y="90" width="43" height="28" rx="7" />
+                <rect x="242" y="72" width="40" height="31" rx="8" />
+                <rect x="388" y="61" width="45" height="31" rx="8" />
+                <rect x="446" y="75" width="51" height="30" rx="8" />
+                <rect x="265" y="248" width="42" height="30" rx="7" />
+                <rect x="321" y="236" width="47" height="34" rx="8" />
+                <rect x="464" y="265" width="43" height="29" rx="7" />
+                <rect x="518" y="251" width="39" height="32" rx="7" />
+              </g>
+
+              <g fontFamily="Arial, sans-serif" textAnchor="middle">
+                <text x="82" y="128" fontSize="9" fontWeight="700" fill="#58715d">{t("OPPORTUNITY", "الفرص")}</text>
+                <text x="245" y="120" fontSize="9" fontWeight="700" fill="#3e7860">{t("MOBILITY", "التنقل")}</text>
+                <text x="444" y="123" fontSize="9" fontWeight="700" fill="#7b704d">{t("INNOVATION", "الابتكار")}</text>
+                <text x="323" y="309" fontSize="9" fontWeight="700" fill="#58715d">{t("PAVILION PARK", "حديقة الأجنحة")}</text>
+                <text x="511" y="310" fontSize="9" fontWeight="700" fill="#80664e">{t("DINING", "المطاعم")}</text>
+                <text x="302" y="211" fontSize="8" fontWeight="700" fill="#8a9a8b">{t("CENTRAL PROMENADE", "الممشى المركزي")}</text>
+              </g>
+
+              <path d={pathData} fill="none" stroke="#ffffff" strokeWidth="18" strokeLinejoin="round" strokeLinecap="round" opacity="0.94" />
+              <motion.path
+                key={generatedPlan.version}
+                d={pathData}
+                fill="none"
+                stroke="#006C35"
+                strokeWidth="7"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                strokeDasharray="13 9"
+                initial={{ pathLength: 0, strokeDashoffset: 120 }}
+                animate={{ pathLength: 1, strokeDashoffset: 0 }}
+                transition={{ pathLength: { duration: 0.9 }, strokeDashoffset: { duration: 5, repeat: Infinity, ease: "linear" } }}
+              />
               {routeStops.map((stop, index) => (
                 <g key={stop.id}>
-                  <circle cx={stop.point[0]} cy={stop.point[1]} r="17" fill="white" stroke="#006C35" strokeWidth="4" />
-                  <circle cx={stop.point[0]} cy={stop.point[1]} r={selectedStop === index ? "8" : "5"} fill={selectedStop === index ? "#006C35" : "#4FB480"} />
+                  {selectedStop === index && (
+                    <motion.circle
+                      cx={stop.point[0]}
+                      cy={stop.point[1]}
+                      r="18"
+                      fill="none"
+                      stroke="#08a35a"
+                      strokeWidth="3"
+                      initial={{ opacity: 0.8, scale: 0.7 }}
+                      animate={{ opacity: 0, scale: 1.5 }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                      style={{ transformOrigin: `${stop.point[0]}px ${stop.point[1]}px` }}
+                    />
+                  )}
+                  <circle cx={stop.point[0]} cy={stop.point[1]} r="13" fill={selectedStop === index ? "#006C35" : "#ffffff"} stroke="#006C35" strokeWidth="3" />
+                  <text x={stop.point[0]} y={stop.point[1] + 4} textAnchor="middle" fontSize="11" fontWeight="800" fill={selectedStop === index ? "#ffffff" : "#006C35"}>{index + 1}</text>
                 </g>
               ))}
             </svg>
+
             {routeStops.map((stop, index) => (
               <button
                 key={stop.id}
                 type="button"
-                onClick={() => setSelectedStop(index)}
+                onClick={() => {
+                  setSelectedStop(index);
+                  setActiveHubId(null);
+                }}
                 aria-pressed={selectedStop === index}
+                aria-label={t(`Focus ${stop.name}`, `عرض ${stop.nameAr}`)}
                 style={{ left: `${(stop.point[0] / 600) * 100}%`, top: `${(stop.point[1] / 360) * 100}%` }}
-                className={cn(
-                  "absolute -translate-x-1/2 -translate-y-1/2 rounded-xl border px-2.5 py-2 text-left shadow-sm transition-all",
-                  selectedStop === index ? "z-20 border-[#006C35] bg-[#006C35] text-white shadow-lg shadow-[#006C35]/20" : "z-10 border-white/80 bg-white/90 text-gray-700 hover:border-[#006C35]/30",
-                )}
-              >
-                <span className="block max-w-[120px] whitespace-nowrap text-[10px] font-bold sm:text-xs">{isRtl ? stop.nameAr : stop.name}</span>
-                <span className={cn("mt-0.5 block text-[9px]", selectedStop === index ? "text-white/75" : "text-gray-400")}>{index === 0 ? t("Starting point", "نقطة البداية") : isRtl ? stop.queueAr : stop.queue}</span>
-              </button>
+                className="absolute z-20 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-transparent"
+              />
             ))}
-            <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full border border-white/80 bg-white/90 px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm"><MapPin className="h-3.5 w-3.5 text-[#006C35]" />{t("Riyadh Expo grounds", "موقع إكسبو الرياض")}</div>
+
+            {mapHubs.map((hub) => {
+              const HubIcon = hub.type === "dining" ? Utensils : hub.type === "restroom" ? Bath : hub.type === "info" ? Info : Building2;
+              const isOpen = activeHubId === hub.id;
+              return (
+                <div
+                  key={hub.id}
+                  className="absolute z-30 -translate-x-1/2 -translate-y-1/2"
+                  style={{ left: `${(hub.point[0] / 600) * 100}%`, top: `${(hub.point[1] / 360) * 100}%` }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setActiveHubId(isOpen ? null : hub.id)}
+                    className={cn(
+                      "flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow-md transition hover:scale-110",
+                      isOpen ? "bg-[#006C35] text-white" : "bg-white text-[#006C35]",
+                    )}
+                    aria-expanded={isOpen}
+                    aria-label={isRtl ? hub.labelAr : hub.label}
+                  >
+                    <HubIcon className="h-4 w-4" />
+                  </button>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 4, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      className="absolute bottom-10 left-1/2 w-40 -translate-x-1/2 rounded-xl border border-[#006C35]/15 bg-white p-3 text-left shadow-xl"
+                    >
+                      <p className="text-xs font-bold text-gray-900">{isRtl ? hub.labelAr : hub.label}</p>
+                      <p className="mt-1 text-[11px] font-semibold text-[#006C35]">{isRtl ? hub.statusAr : hub.status}</p>
+                    </motion.div>
+                  )}
+                </div>
+              );
+            })}
+
+            <div className="absolute bottom-3 left-3 flex items-center gap-2 rounded-full border border-white/80 bg-white/90 px-3 py-2 text-[11px] font-semibold text-gray-600 shadow-sm backdrop-blur-sm">
+              <MapPin className="h-3.5 w-3.5 text-[#006C35]" />
+              {t("Riyadh Expo masterplan", "المخطط العام لإكسبو الرياض")}
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-start gap-3 rounded-2xl border border-[#006C35]/15 bg-[#f3faf5] p-4">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#006C35] text-white">
+              <Navigation className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.13em] text-[#006C35]">{t("Turn-by-turn guidance", "إرشادات خطوة بخطوة")}</p>
+              <p className="mt-1 text-sm font-semibold leading-relaxed text-gray-700">
+                {selectedStop === routeStops.length - 1
+                  ? t(`You have arrived at ${activeStop.name}.`, `لقد وصلت إلى ${activeStop.nameAr}.`)
+                  : t(
+                      `From ${activeStop.name}, walk ${guidanceDistance}m along ${concourseName} to ${nextStop.name}.`,
+                      `من ${activeStop.nameAr}، امشِ ${guidanceDistance}م عبر ${concourseName} إلى ${nextStop.nameAr}.`,
+                    )}
+              </p>
+            </div>
           </div>
         </section>
 
