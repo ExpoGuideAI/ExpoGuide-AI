@@ -109,10 +109,11 @@ export function Scene2() {
 }
 
 function TabAIGuide() {
-  const answerWords = "El Pabellón de Japón se encuentra en la Zona de Oportunidad, a 5 minutos caminando desde su ubicación actual.".split(" ");
+  const answerWords = "The Japan Pavilion is located in the Opportunity District, a 5-minute walk from your current location.".split(" ");
   return (
     <motion.div 
       className="absolute inset-[2.5vw] flex flex-col pb-[0.5vw]"
+      dir="ltr"
       initial={{ opacity: 0, scale: 0.95, filter: 'blur(5px)' }}
       animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
       exit={{ opacity: 0, scale: 1.05, filter: 'blur(5px)' }}
@@ -128,16 +129,16 @@ function TabAIGuide() {
       
       <div className="flex flex-col gap-[1.5vw] mt-auto">
         <motion.div 
-          className="self-end bg-[var(--color-primary)] text-white text-[1.2vw] px-[1.5vw] py-[1vw] rounded-[1.5vw] rounded-tr-[0.2vw] shadow-md max-w-[80%]"
+          className="self-end bg-[var(--color-primary)] text-white text-[1.2vw] text-left leading-snug px-[1.5vw] py-[1vw] rounded-[1.5vw] rounded-tr-[0.2vw] shadow-md max-w-[80%]"
           initial={{ opacity: 0, scale: 0.9, x: 20 }}
           animate={{ opacity: 1, scale: 1, x: 0 }}
           transition={{ delay: 0.3, type: "spring" }}
         >
-          ¿Dónde está el Pabellón de Japón?
+          Where is the Japan Pavilion?
         </motion.div>
         
         <motion.div 
-          className="self-start bg-white text-[var(--color-text-dark)] text-[1.2vw] px-[1.5vw] py-[1vw] rounded-[1.5vw] rounded-tl-[0.2vw] shadow-md max-w-[90%] border border-gray-100 flex flex-wrap gap-[0.4vw]"
+          className="self-start bg-white text-[var(--color-text-dark)] text-[1.2vw] text-left leading-snug px-[1.5vw] py-[1vw] rounded-[1.5vw] rounded-tl-[0.2vw] shadow-md max-w-[90%] border border-gray-100 flex flex-wrap gap-[0.4vw]"
           initial={{ opacity: 0, scale: 0.9, x: -20 }}
           animate={{ opacity: 1, scale: 1, x: 0 }}
           transition={{ delay: 1.2, type: "spring" }}
