@@ -22,3 +22,17 @@ mtime_ms = 1789759969323
 storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:a5f7f774-3570-4e05-9060-c73714509dda/953d8083-5972-4181-9b9d-69160679958c/2367b676-bd63-45dc-a830-79ce1f26c6b0"
 storage_version_token = "1789759977281785"
 content_type = "video/mp4"
+
+[[outputs]]
+id = "XOSy73RcRXAN_s2WdAVo5"
+uri = "file://artifacts/expoguide-ai-video/public/latest-demo.mp4"
+type = "video"
+title = "Latest ExpoGuide AI Demo Video"
+description = "Fresh 40-second 1280×720 MP4 rendered from the rebuilt animation with the updated English Scene 2 chat copy."
+logical_id = "5330b764-0097-411f-b63b-6debe8bd1a57"
+content_hash = "sha256:bb67d3f1381144fe92d8775b7e45a2c657ce05251167ccc6c7ce9e2f27c72509"
+size = 4450496
+mtime_ms = 1789760669074
+storage_uri = "gcs://replit-rams-assets-pike/rams/assets/repl:a5f7f774-3570-4e05-9060-c73714509dda/5330b764-0097-411f-b63b-6debe8bd1a57/b8353eda-38f1-444b-b9c9-754d586416bd"
+storage_version_token = "1789760692871473"
+content_type = "video/mp4"
