@@ -10,6 +10,7 @@ import {
   Navigation,
   Plus,
   Route as RouteIcon,
+  Search,
   ShieldCheck,
   Sparkles,
   X,
@@ -41,7 +42,7 @@ const locations: ExpoLocation[] = [
 ];
 
 const startOptions = locations.slice(0, 4);
-const destinationOptions = locations.slice(4);
+const quickSuggestionIds = ["saudi", "japan", "dining"];
 
 function calculateRoute(route: ExpoLocation[]) {
   let totalDistance = 0;
@@ -79,13 +80,17 @@ export function SmartRoute() {
   });
   const [selectedStop, setSelectedStop] = useState(0);
   const [locationDetected, setLocationDetected] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [customLocations, setCustomLocations] = useState<ExpoLocation[]>([]);
+
+  const allLocations = useMemo(() => [...locations, ...customLocations], [customLocations]);
 
   const routeStops = useMemo(
     () =>
       [generatedPlan.startId, ...generatedPlan.destinationIds]
-        .map((id) => locations.find((location) => location.id === id))
+        .map((id) => allLocations.find((location) => location.id === id))
         .filter((location): location is ExpoLocation => Boolean(location)),
-    [generatedPlan],
+    [allLocations, generatedPlan],
   );
   const routeData = useMemo(() => calculateRoute(routeStops), [routeStops]);
   const activeStop = routeStops[selectedStop] ?? routeStops[0];
@@ -93,10 +98,59 @@ export function SmartRoute() {
     .map((stop, index) => `${index === 0 ? "M" : "L"} ${stop.point[0]} ${stop.point[1]}`)
     .join(" ");
 
-  const toggleDestination = (id: string) => {
-    setDestinationIds((current) =>
-      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+  const filteredLocations = useMemo(() => {
+    const query = searchTerm.trim().toLocaleLowerCase();
+    if (!query) return [];
+    return allLocations
+      .filter(
+        (location) =>
+          !destinationIds.includes(location.id) &&
+          [location.name, location.nameAr, location.area, location.areaAr]
+            .some((value) => value.toLocaleLowerCase().includes(query)),
+      )
+      .slice(0, 5);
+  }, [allLocations, destinationIds, searchTerm]);
+
+  const addDestination = (id: string) => {
+    setDestinationIds((current) => current.includes(id) ? current : [...current, id]);
+    setSearchTerm("");
+  };
+
+  const removeDestination = (id: string) => {
+    setDestinationIds((current) => current.filter((item) => item !== id));
+  };
+
+  const addSearchDestination = () => {
+    const value = searchTerm.trim();
+    if (!value) return;
+
+    const existingLocation = allLocations.find(
+      (location) =>
+        location.name.toLocaleLowerCase() === value.toLocaleLowerCase() ||
+        location.nameAr.toLocaleLowerCase() === value.toLocaleLowerCase(),
     );
+    if (existingLocation) {
+      addDestination(existingLocation.id);
+      return;
+    }
+
+    const customIndex = customLocations.length;
+    const customLocation: ExpoLocation = {
+      id: `custom-${customIndex}-${value.toLocaleLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+      name: value,
+      nameAr: value,
+      area: "Custom stop",
+      areaAr: "محطة مخصصة",
+      point: [
+        145 + ((customIndex * 97) % 315),
+        95 + ((customIndex * 73) % 185),
+      ],
+      queue: "Moderate",
+      queueAr: "ازدحام متوسط",
+    };
+    setCustomLocations((current) => [...current, customLocation]);
+    setDestinationIds((current) => [...current, customLocation.id]);
+    setSearchTerm("");
   };
 
   const generateRoute = () => {
@@ -205,32 +259,107 @@ export function SmartRoute() {
 
             <div>
               <p className="mb-2 text-sm font-bold text-gray-800">{t("Destinations", "الوجهات")}</p>
-              <div className="min-h-[92px] rounded-2xl border border-[#006C35]/20 bg-white p-3">
-                <div className="flex flex-wrap gap-2">
-                  {destinationOptions.map((location) => {
-                    const selected = destinationIds.includes(location.id);
-                    return (
+              <div className="relative">
+                <div className="flex items-center rounded-2xl border border-[#006C35]/20 bg-white px-3 transition focus-within:border-[#006C35] focus-within:ring-4 focus-within:ring-[#006C35]/10">
+                  <Search className="h-5 w-5 shrink-0 text-[#006C35]" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        addSearchDestination();
+                      }
+                    }}
+                    placeholder={t(
+                      "Type a pavilion, hall, booth, or custom stop...",
+                      "اكتب جناحاً أو قاعة أو منصة أو محطة مخصصة...",
+                    )}
+                    className="min-w-0 flex-1 bg-transparent px-3 py-3.5 text-sm text-gray-800 outline-none placeholder:text-gray-400"
+                    aria-label={t("Search or add a destination", "ابحث عن وجهة أو أضفها")}
+                  />
+                  <button
+                    type="button"
+                    onClick={addSearchDestination}
+                    disabled={!searchTerm.trim()}
+                    className="rounded-xl bg-[#006C35] px-3 py-2 text-xs font-bold text-white transition hover:bg-[#00592d] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    {t("Add", "إضافة")}
+                  </button>
+                </div>
+
+                {filteredLocations.length > 0 && (
+                  <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 overflow-hidden rounded-2xl border border-[#006C35]/15 bg-white p-1.5 shadow-xl">
+                    {filteredLocations.map((location) => (
                       <button
                         key={location.id}
                         type="button"
-                        aria-pressed={selected}
-                        onClick={() => toggleDestination(location.id)}
-                        className={cn(
-                          "inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-sm font-bold transition",
-                          selected
-                            ? "border-[#006C35] bg-[#006C35] text-white shadow-sm"
-                            : "border-[#006C35]/15 bg-[#f5fbf7] text-[#006C35] hover:border-[#006C35]/40",
-                        )}
+                        onClick={() => addDestination(location.id)}
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-[#f2f9f4]"
                       >
-                        {selected ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#006C35]/10 text-[#006C35]">
+                          <MapPin className="h-4 w-4" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-bold text-gray-800">{isRtl ? location.nameAr : location.name}</span>
+                          <span className="block truncate text-xs text-gray-500">{isRtl ? location.areaAr : location.area}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-3 min-h-[48px] rounded-2xl border border-[#006C35]/10 bg-[#f7fbf8] p-2.5">
+                <div className="flex flex-wrap gap-2">
+                  {destinationIds.map((id) => {
+                    const location = allLocations.find((item) => item.id === id);
+                    if (!location) return null;
+                    return (
+                      <span key={id} className="inline-flex items-center gap-1.5 rounded-full bg-[#006C35] py-2 pl-3 pr-2 text-sm font-bold text-white shadow-sm">
                         {isRtl ? location.nameAr : location.name}
-                        {selected && <X className="h-3.5 w-3.5 opacity-75" />}
+                        <button
+                          type="button"
+                          onClick={() => removeDestination(id)}
+                          className="flex h-5 w-5 items-center justify-center rounded-full bg-white/15 transition hover:bg-white/30"
+                          aria-label={t(`Remove ${location.name}`, `إزالة ${location.nameAr}`)}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </span>
+                    );
+                  })}
+                  {destinationIds.length === 0 && (
+                    <span className="px-1 py-1.5 text-xs text-gray-400">{t("No destinations selected yet", "لم يتم اختيار وجهات بعد")}</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-gray-400">
+                  {t("Popular Quick-Add Suggestions", "اقتراحات شائعة للإضافة السريعة")}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {quickSuggestionIds.map((id) => {
+                    const location = locations.find((item) => item.id === id)!;
+                    const selected = destinationIds.includes(id);
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        disabled={selected}
+                        onClick={() => addDestination(id)}
+                        className="inline-flex items-center gap-1 rounded-full border border-[#006C35]/15 bg-white px-2.5 py-1.5 text-xs font-bold text-[#006C35] transition hover:border-[#006C35]/40 hover:bg-[#f2f9f4] disabled:cursor-default disabled:opacity-40"
+                      >
+                        <Plus className="h-3 w-3" />
+                        {isRtl ? location.nameAr : location.name}
                       </button>
                     );
                   })}
                 </div>
               </div>
-              <p className="mt-2 text-xs text-gray-500">{t(`${destinationIds.length} destinations selected · tap a pill to add or remove`, `تم اختيار ${destinationIds.length} وجهات · اضغط للإضافة أو الإزالة`)}</p>
+              <p className="mt-2 text-xs text-gray-500">{t(`${destinationIds.length} destinations selected`, `تم اختيار ${destinationIds.length} وجهات`)}</p>
             </div>
           </div>
 
